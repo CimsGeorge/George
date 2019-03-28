@@ -5,8 +5,8 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 
 /**
- * @author Yue
- * @since 2019/3/27
+ * @author Yue Lin
+ * @version 0.0.1
  */
 public class ClientConfig {
 

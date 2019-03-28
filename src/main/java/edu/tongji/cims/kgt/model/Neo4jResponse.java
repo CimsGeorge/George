@@ -8,16 +8,15 @@ import java.util.List;
 
 /**
  * @author Yue Lin
- * @since 2018-11-06
+ * @version 0.0.1
  */
 
-@Setter
 @Getter
+@Setter
 @ToString
 public class Neo4jResponse {
 
     private List<Result> results;
-    private Object errors;
-
+    private List<Object> errors;
 }
 

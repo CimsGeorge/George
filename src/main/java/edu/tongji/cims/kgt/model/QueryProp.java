@@ -1,15 +1,19 @@
 package edu.tongji.cims.kgt.model;
 
 import edu.tongji.cims.kgt.util.Tokenizer;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author Yue Lin
- * @since 2018-12-15
+ * @version 0.0.1
  */
 
+@Getter
+@Setter
 public class QueryProp {
 
     private Map<String, String> props;
@@ -32,15 +36,6 @@ public class QueryProp {
         props.put("to", standardize(to));
     }
 
-    public Map<String, String> getProps() {
-        return props;
-    }
-
-    public void setProps(Map<String, String> props) {
-        this.props = props;
-    }
-
-    // todo 解决本体空格转换成下划线问题，若非空格转化的下划线该如何处理？
     private String standardize(String s) {
         return Tokenizer.replaceUnderlineWithSpace(s);
     }

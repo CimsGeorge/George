@@ -6,7 +6,7 @@ import lombok.ToString;
 
 /**
  * @author Yue Lin
- * @since 2018-11-17
+ * @version 0.0.1
  */
 
 @Getter

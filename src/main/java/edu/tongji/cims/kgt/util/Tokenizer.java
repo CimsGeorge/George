@@ -2,7 +2,7 @@ package edu.tongji.cims.kgt.util;
 
 /**
  * @author Yue Lin
- * @since 2018-12-25
+ * @version 0.0.1
  */
 public class Tokenizer {
 
