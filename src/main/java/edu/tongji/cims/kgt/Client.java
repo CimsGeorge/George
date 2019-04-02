@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * the client to handle ontology and neo4j.
+ * a client to handle ontology and neo4j.
  * @author Yue Lin
  * @version 0.0.1
  */
@@ -39,7 +39,7 @@ public class Client {
      * @throws IOException
      */
     public Boolean mergeClass(String name) throws IOException {
-        return judge(neo4jService.mergClass(name));
+        return judge(neo4jService.mergeClass(name));
     }
 
     /**

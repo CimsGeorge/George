@@ -43,14 +43,17 @@ public class Neo4jService {
         client = ClientConfig.getClient();
     }
 
-    public Neo4jResponse mergClass(String name) throws IOException {
+    public Neo4jResponse mergeClass(String name) throws IOException {
         String statement = Cypher.MERGE_NODE;
         return handler(statement, new QueryProp(name).getProps());
     }
 
-//    public Neo4jResponse mergeInstance(String name, Map<String, String> properties) {
+    public Neo4jResponse mergeInstance(String name, Map<String, String> properties) throws IOException {
 //        String statement = Cypher
-//    }
+        Map<String, String> map = getNodeProperties(name);
+        return null;
+
+    }
 
     public List<Node> queryNodeInFuzzy(String name) throws IOException {
         String statement = Cypher.QUERY_NODE_IN_FUZZY;

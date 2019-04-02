@@ -1,3 +1,3 @@
 # kgt
 
-a knowledge graph tool
+A knowledge graph tool.
