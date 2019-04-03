@@ -76,7 +76,7 @@ public class OntologyService {
 
     private ClassPair handleRelation(OWLReasoner reasoner, OWLClass owlClass) throws IOException {
         String className = getObjectName(owlClass);
-        neo4jService.mergClass(className);
+        neo4jService.mergeNode(className);
         NodeSet<OWLClass> superClasses = reasoner.getSuperClasses(owlClass, true);
         List<String> statements = new ArrayList<>();
         List<Parameter> parameters = new ArrayList<>();
@@ -106,9 +106,7 @@ public class OntologyService {
             // todo
             statements.add(Cypher.MERGE_EDGE);
             parameters.add(new Parameter(new QueryProp(indiName, RelationEnum.INSTANCE.getName(), nodeName).getProps()));
-            if (statements.size() != 0)
-                neo4jService.handler(statements, parameters);
-
+            neo4jService.handler(statements, parameters);
             Stream<OWLObjectProperty> objectProperty = ontology.objectPropertiesInSignature();
             objectProperty.forEach(o -> {
                 try {
@@ -122,15 +120,17 @@ public class OntologyService {
             Map<String, String> props = new HashMap<>();
             dataProperty.forEach(d -> handleDataProperty(reasoner, indi, d, props));
             String name = Tokenizer.replaceUnderlineWithSpace(indiName);
-            List<String> statementList = new ArrayList<>();
-            List<Parameter> parameterList = new ArrayList<>();
-            for (Map.Entry<String, String> e : props.entrySet()) {
-                String statement = Cypher.setInstanceProperty(e.getKey());
-                statementList.add(statement);
-                parameterList.add(new Parameter(new QueryProp(name, e.getValue()).getProps()));
-            }
-            if (statementList.size() != 0)
-                neo4jService.handler(statementList, parameterList);
+            if (props.size() != 0)
+                neo4jService.setNodeProperties(name, props);
+//            List<String> statementList = new ArrayList<>();
+//            List<Parameter> parameterList = new ArrayList<>();
+//            for (Map.Entry<String, String> e : props.entrySet()) {
+//                String statement = Cypher.setInstanceProperty(e.getKey());
+//                statementList.add(statement);
+//                parameterList.add(new Parameter(new QueryProp(name, e.getValue()).getProps()));
+//            }
+//            if (statementList.size() != 0)
+//                neo4jService.handler(statementList, parameterList);
         }
     }
 

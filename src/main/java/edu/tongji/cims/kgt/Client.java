@@ -25,10 +25,10 @@ public class Client {
 
     /**
      *
-     * @param url the url to connect neo4j
+     * @param uri the url to connect neo4j
      */
-    public Client(String url) {
-        neo4jService = new Neo4jService(url);
+    public Client(String uri) {
+        neo4jService = new Neo4jService(uri);
         ontologyService = new OntologyService(neo4jService);
     }
 
@@ -38,8 +38,19 @@ public class Client {
      * @return
      * @throws IOException
      */
-    public Boolean mergeClass(String name) throws IOException {
-        return judge(neo4jService.mergeClass(name));
+    public Boolean mergeNode(String name) throws IOException {
+        return judge(neo4jService.mergeNode(name));
+    }
+
+    /**
+     *
+     * @param name
+     * @param properties
+     * @return
+     * @throws IOException
+     */
+    public Boolean mergeNode(String name, Map<String, String> properties) throws IOException {
+        return judge(neo4jService.mergeNode(name, properties));
     }
 
     /**
@@ -75,6 +86,16 @@ public class Client {
 
     /**
      *
+     * @param name
+     * @return
+     * @throws IOException
+     */
+    public String getNodeType(String name) throws IOException {
+        return neo4jService.getNodeType(name);
+    }
+
+    /**
+     *
      * @param name the name of node
      * @return
      * @throws IOException
@@ -92,6 +113,10 @@ public class Client {
      */
     public Graph queryPath(String name, int degree) throws IOException {
         return neo4jService.queryPath(name, degree);
+    }
+
+    public Graph queryPath(String from, String to) {
+        return null;
     }
 
     /**

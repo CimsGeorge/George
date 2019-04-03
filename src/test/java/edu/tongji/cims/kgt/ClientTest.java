@@ -2,7 +2,6 @@ package edu.tongji.cims.kgt;
 
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,12 +12,25 @@ import java.util.Map;
  */
 public class ClientTest {
 
-    private static String url = "http://neo4j:1234@localhost:7474";
-    private static Client client = new Client(url);
+    private static String uri = "http://neo4j:1234@localhost:7474";
+    private static Client client = new Client(uri);
 
     public static void main(String[] args) throws IOException, OWLOntologyCreationException {
-        setNodePropertiesTest();
-        getNodePropertiesTest();
+        String name = "test";
+        Map<String, String> properties = new HashMap<>();
+//        properties.put("c", "2");
+//        properties.put("b", "1");
+//        mergeNodeTest(name, properties);
+//        mergeNodeTest(name);
+        setNodeProperties(name, properties);
+    }
+
+    public static void mergeNodeTest(String name) throws IOException {
+        System.out.println(client.mergeNode(name));
+    }
+
+    public static void mergeNodeTest(String name, Map<String, String> properties) throws IOException {
+        System.out.println(client.mergeNode(name, properties));
     }
 
     public static void getNodePropertiesTest() throws IOException {
@@ -27,9 +39,8 @@ public class ClientTest {
             System.out.println(e.getKey() + ": " + e.getValue());
     }
 
-    public static void setNodePropertiesTest() throws IOException {
-        Map<String, String> map = new HashMap<>();
-        map.put("c", "2");
-        System.out.println(client.setNodeProperties("test", map));
+    public static void setNodeProperties(String name, Map<String, String> properties) throws IOException {
+        System.out.println(client.setNodeProperties(name, properties));
     }
+
 }
