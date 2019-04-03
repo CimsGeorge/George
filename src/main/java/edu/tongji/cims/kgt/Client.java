@@ -9,7 +9,6 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,7 +24,7 @@ public class Client {
 
     /**
      *
-     * @param uri the url to connect neo4j
+     * @param uri the uri to connect neo4j
      */
     public Client(String uri) {
         neo4jService = new Neo4jService(uri);
@@ -54,6 +53,17 @@ public class Client {
     }
 
     /**
+     *
+     * @param fromName
+     * @param relName
+     * @param toName
+     * @return
+     */
+    public Boolean mergeTriple(String fromName, String relName, String toName) throws IOException {
+        return judge(neo4jService.mergeTriple(fromName, relName, toName));
+    }
+
+    /**
      * get all properties of a node.
      * @param name the name of node
      * @return the map of this node's properties
@@ -76,12 +86,33 @@ public class Client {
 
     /**
      *
-     * @param name the name of node
+     * @param propertyKey
+     * @param propertyValue
+     * @return
+     */
+    public List<Node> getNameByProperty(String propertyKey, String propertyValue) {
+        return null;
+    }
+
+    /**
+     *
+     * @param propertyKey
+     * @param propertyValue
      * @return
      * @throws IOException
      */
-    public List<Node> queryNodeInFuzzy(String name) throws IOException {
-        return neo4jService.queryNodeInFuzzy(name);
+    public List<Node> queryNodeInFuzzyByProperty(String propertyKey, String propertyValue) throws IOException {
+        return neo4jService.queryNodeInFuzzyByProperty(propertyKey, propertyValue);
+    }
+
+    /**
+     *
+     * @param name
+     * @return
+     * @throws IOException
+     */
+    public List<Node> queryNext(String name) throws IOException {
+        return neo4jService.queryNext(name);
     }
 
     /**
@@ -115,8 +146,15 @@ public class Client {
         return neo4jService.queryPath(name, degree);
     }
 
-    public Graph queryPath(String from, String to) {
-        return null;
+    /**
+     *
+     * @param fromName
+     * @param toName
+     * @return
+     * @throws IOException
+     */
+    public Graph queryShortestPath(String fromName, String toName) throws IOException {
+        return neo4jService.queryShortestPath(fromName, toName);
     }
 
     /**
@@ -126,7 +164,7 @@ public class Client {
      * @throws IOException
      */
     public Neo4jResponse query(String statement) throws IOException {
-        return neo4jService.handler(statement, new HashMap<>());
+        return neo4jService.query(statement);
     }
 
     /**
@@ -139,11 +177,6 @@ public class Client {
         return ontologyService.parse(file);
     }
 
-    /**
-     *
-     * @param neo4jResponse
-     * @return
-     */
     private Boolean judge(Neo4jResponse neo4jResponse) {
         return neo4jResponse.getErrors().size() == 0;
     }

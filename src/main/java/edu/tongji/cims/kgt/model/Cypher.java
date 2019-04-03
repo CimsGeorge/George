@@ -54,7 +54,7 @@ public class Cypher {
     public final static String QUERY_PROPERTY_KEY = "match (n:node {name: {props}.name}) return keys(n)";
     public final static String DELETE_ALL = "match(n) detach delete n";
     public final static String QUERY_IN_NODE = "match (from:node)-[rel]->(to:node{name:{props}.name}) return from.name,rel.name";
-    public final static String HAS_NEXT = "match (from:node)-[rel]->(to:node{name:{props}.name}) return to";
+    public final static String QUERY_NEXT = "match (from:node{name:{props}.name})-[rel]->(to:node) return to";
 
 
 

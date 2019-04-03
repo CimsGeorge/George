@@ -18,7 +18,6 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.BufferingMode;
-import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.SimpleConfiguration;
 import org.semanticweb.owlapi.reasoner.structural.StructuralReasoner;
@@ -77,10 +76,10 @@ public class OntologyService {
     private ClassPair handleRelation(OWLReasoner reasoner, OWLClass owlClass) throws IOException {
         String className = getObjectName(owlClass);
         neo4jService.mergeNode(className);
-        NodeSet<OWLClass> superClasses = reasoner.getSuperClasses(owlClass, true);
+//        NodeSet<OWLClass> superClasses = reasoner.getSuperClasses(owlClass, true);
         List<String> statements = new ArrayList<>();
         List<Parameter> parameters = new ArrayList<>();
-        for (org.semanticweb.owlapi.reasoner.Node<OWLClass> parentOWLNode : superClasses) {
+        for (org.semanticweb.owlapi.reasoner.Node<OWLClass> parentOWLNode : reasoner.getSuperClasses(owlClass, true)) {
             OWLClass parent = parentOWLNode.getRepresentativeElement();
             String parentName = getObjectName(parent);
             if (!parentName.equals("owl:Thing")) {

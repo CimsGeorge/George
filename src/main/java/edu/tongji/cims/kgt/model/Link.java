@@ -8,9 +8,6 @@ import lombok.Data;
  * @version 0.0.1
  */
 
-//@Getter
-//@Setter
-//@ToString
 @AllArgsConstructor
 @Data
 public class Link {

@@ -18,10 +18,10 @@ public class ClientTest {
     public static void main(String[] args) throws IOException, OWLOntologyCreationException {
         String name = "test";
         Map<String, String> properties = new HashMap<>();
-//        properties.put("c", "2");
-//        properties.put("b", "1");
-//        mergeNodeTest(name, properties);
-//        mergeNodeTest(name);
+        properties.put("c", "2");
+        properties.put("b", "1");
+        mergeNodeTest(name, properties);
+        mergeNodeTest(name);
         setNodeProperties(name, properties);
     }
 

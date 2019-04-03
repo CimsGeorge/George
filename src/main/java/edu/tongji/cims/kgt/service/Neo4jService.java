@@ -3,7 +3,6 @@ package edu.tongji.cims.kgt.service;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import edu.tongji.cims.kgt.config.ClientConfig;
 import edu.tongji.cims.kgt.model.Cypher;
 import edu.tongji.cims.kgt.model.Data;
 import edu.tongji.cims.kgt.model.Graph;
@@ -21,6 +20,8 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
@@ -37,12 +38,26 @@ import java.util.Set;
  */
 public class Neo4jService {
 
+    /**
+     * 请求Neo4j的httpClient连接池
+     */
+    private static class HttpClientConfig {
+        private final static int MAX_TOTAL = 200;
+        private final static int DEFAULT_MAX_PER_ROUTE = 100;
+        private final static PoolingHttpClientConnectionManager CM = new PoolingHttpClientConnectionManager();
+        private static CloseableHttpClient getHttpClient() {
+            CM.setMaxTotal(MAX_TOTAL);
+            CM.setDefaultMaxPerRoute(DEFAULT_MAX_PER_ROUTE);
+            return HttpClients.custom().setConnectionManager(CM).build();
+        }
+    }
+
     private String url;
     private CloseableHttpClient client;
 
     public Neo4jService(String uri) {
         this.url = uri + "/db/data/transaction/commit";
-        client = ClientConfig.getClient();
+        client = HttpClientConfig.getHttpClient();
     }
 
     public Neo4jResponse mergeNode(String name) throws IOException {
@@ -55,10 +70,27 @@ public class Neo4jService {
         return setNodeProperties(name, properties);
     }
 
+    public Neo4jResponse mergeTriple(String fromName, String relName, String toName) throws IOException {
+        mergeNode(fromName);
+        mergeNode(toName);
+        String statement = Cypher.MERGE_EDGE;
+        return handler(statement, new QueryProp(fromName, relName, toName).getProps());
+    }
+
     public List<Node> queryNodeInFuzzy(String name) throws IOException {
         String statement = Cypher.QUERY_NODE_IN_FUZZY;
         name = ".*" + name + ".*";
         return composeFuzzyNodes(handler(statement, new QueryProp(name).getProps()));
+    }
+
+    public List<Node> queryNodeInFuzzyByProperty(String propertyKey, String propertyValue) throws IOException {
+        return null;
+    }
+
+    public List<Node> queryNext(String name) throws IOException {
+        String statement = Cypher.QUERY_NEXT;
+        handler(statement, new QueryProp(name).getProps());
+        return null;
     }
 
     public Boolean containsNode(String name) throws IOException {
@@ -104,6 +136,15 @@ public class Neo4jService {
     public Graph queryPath(String name, int degree) throws IOException {
         String statement = Cypher.queryPath(degree);
         return composeGraph(handler(statement, new QueryProp(name).getProps()));
+    }
+
+    public Graph queryShortestPath(String from, String to) throws IOException {
+        String statement = Cypher.SHORTEST_PATH;
+        return composeGraph(handler(statement, new QueryProp(from, to).getProps()));
+    }
+
+    public Neo4jResponse query(String statement) throws IOException {
+        return handler(statement, new HashMap<>());
     }
 
     private Graph composeGraph(Neo4jResponse neo4jResponse) {
@@ -181,7 +222,7 @@ public class Neo4jService {
         }
     }
 
-    public Neo4jResponse handler(String statement, Map<String, String> props) throws IOException {
+    private Neo4jResponse handler(String statement, Map<String, String> props) throws IOException {
         List<String> stringList = new ArrayList<>();
         stringList.add(statement);
         List<Parameter> parameterList = new ArrayList<>();
@@ -189,7 +230,7 @@ public class Neo4jService {
         return handler(stringList, parameterList);
     }
 
-    public Neo4jResponse handler(List<String> statementList, List<Parameter> parameterList) throws IOException {
+    Neo4jResponse handler(List<String> statementList, List<Parameter> parameterList) throws IOException {
         List<Statement> statements = new ArrayList<>();
         for (int i = 0; i < statementList.size(); i++)
             statements.add(new Statement(statementList.get(i), parameterList.get(i)));
