@@ -17,35 +17,28 @@ public class KnowledgeGraphClientTest {
     private static KnowledgeGraphClient kgClient = new KnowledgeGraphClient(uri);
 
     public static void main(String[] args) throws IOException, OWLOntologyCreationException {
-//        removeAll();
-        File file = new File("C:\\Users\\Yue\\Desktop\\Ontology1480424544138.rdf");
-        parseOntology(file);
+        String name = "test1";
+//        saveClassTest(name);
+        Map<String, String> properties = new HashMap<>();
+        properties.put("size", "2");
+        updateClassPropertyTest(name, properties);
+//        removeAllTest();
     }
 
     public static void parseOntology(File file) throws OWLOntologyCreationException, IOException {
         kgClient.parseOntology(file);
     }
 
-    public static void removeAll() throws IOException {
+    public static void saveClassTest(String name) throws IOException {
+        System.out.println(kgClient.saveClass(name));
+    }
+
+    public static void updateClassPropertyTest(String name, Map<String, String> properties) throws IOException {
+        System.out.println(kgClient.updateClassProperty(name, properties));
+    }
+
+    public static void removeAllTest() throws IOException {
         System.out.println(kgClient.removeAll());
-    }
-
-    public static void mergeNodeTest(String name) throws IOException {
-        System.out.println(kgClient.mergeNode(name));
-    }
-
-    public static void mergeNodeTest(String name, Map<String, String> properties) throws IOException {
-        System.out.println(kgClient.mergeNode(name, properties));
-    }
-
-    public static void getNodePropertiesTest() throws IOException {
-        Map<String, String> map = kgClient.getNodeProperties("test");
-        for (Map.Entry e : map.entrySet())
-            System.out.println(e.getKey() + ": " + e.getValue());
-    }
-
-    public static void setNodeProperties(String name, Map<String, String> properties) throws IOException {
-        System.out.println(kgClient.setNodeProperties(name, properties));
     }
 
 }

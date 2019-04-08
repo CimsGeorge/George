@@ -12,7 +12,7 @@ import edu.tongji.cims.kgt.model.neo4j.request.Parameter;
 import edu.tongji.cims.kgt.model.neo4j.request.Statement;
 import edu.tongji.cims.kgt.model.neo4j.response.Data;
 import edu.tongji.cims.kgt.model.neo4j.response.Neo4jResponse;
-import edu.tongji.cims.kgt.model.ontology.RelationshipEnum;
+import edu.tongji.cims.kgt.model.ontology.ComponentEnum;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -63,7 +63,11 @@ public class Neo4jService extends CypherService {
         return execute(MERGE_CLASS, name);
     }
 
-    public Neo4jResponse saveClass(String name, Map<String, String> properties) {
+    public Neo4jResponse saveClass(String name, Map<String, String> properties) throws IOException {
+        return saveNodeWithProperty(ComponentEnum.CLASS, name, properties);
+    }
+
+    public Neo4jResponse saveSubClass(String superClassName, String subClassName) {
         return null;
     }
 
@@ -71,13 +75,29 @@ public class Neo4jService extends CypherService {
         return execute(MERGE_INDIVIDUAL, name);
     }
 
-    public Neo4jResponse saveSubClass(String superClassName, String subClassName) {
+    public Neo4jResponse saveIndividual(String name, Map<String, String> properties) throws IOException {
+        return null;
+    }
+
+    public Neo4jResponse updateClassProperty(String name, Map<String, String> properties) throws IOException {
+        return setProperty(ComponentEnum.CLASS, name, properties);
+    }
+
+    public Neo4jResponse updateIndividualProperty(String name, Map<String, String> properties) {
         return null;
     }
 
     public List<Node> getNodeInFuzzy(String name) throws IOException {
         name = ".*" + name + ".*";
         return composeFuzzyNodes(execute(QUERY_NODE_IN_FUZZY, name));
+    }
+
+    public Neo4jResponse removeClass(String name) throws IOException {
+        return execute(DELETE_CLASS, name);
+    }
+
+    public Neo4jResponse removeIndividual(String name) {
+        return null;
     }
 
     public Neo4jResponse removeAll() throws IOException {
@@ -97,39 +117,32 @@ public class Neo4jService extends CypherService {
         return execute(CONTAINS_NODE, name).getResults().get(0).getData().size() > 0;
     }
 
-    public Map<String, String> getNodeProperties(String name) throws IOException {
-        String statement = CypherService.QUERY_NODE;
-        return getNodeProperties(execute(statement, name));
+    private Neo4jResponse saveNodeWithProperty(ComponentEnum component, String name, Map<String, String> properties) throws IOException {
+        Batch batch = new Batch();
+        if (component == ComponentEnum.CLASS)
+            batch.statements.add(MERGE_CLASS);
+        else if (component == ComponentEnum.INDIVIDUAL)
+            batch.statements.add(MERGE_INDIVIDUAL);
+        batch.parameters.add(new Parameter(name));
+        addProperty2Batch(component, name, properties, batch);
+        return execute(batch);
     }
 
-    public Neo4jResponse setNodeProperties(String name, Map<String, String> properties) throws IOException {
-        List<String> statements = new ArrayList<>();
-        List<Parameter> parameters = new ArrayList<>();
+    private Neo4jResponse setProperty(ComponentEnum component, String name, Map<String, String> properties) throws IOException {
+        Batch batch = new Batch();
+        addProperty2Batch(component, name, properties, batch);
+        return execute(batch);
+    }
+
+    private void addProperty2Batch(ComponentEnum component, String name, Map<String, String> properties, Batch batch) {
         for (Map.Entry<String, String> e : properties.entrySet()) {
-            String statement = CypherService.setProperty(e.getKey());
-            statements.add(statement);
-            parameters.add(new Parameter(name, e.getValue()));
+            batch.statements.add(setProperty(component.getName(), e.getKey()));
+            batch.parameters.add(new Parameter(name, e.getValue()));
         }
-        return execute(statements, parameters);
     }
 
     public String getNodeType(String name) throws IOException {
-        Neo4jResponse response = getRelationship(name, 2);
-        Set<String> set = new HashSet<>();
-        composeRelationships(response, set);
-        if (!set.isEmpty()) {
-            if (set.contains(RelationshipEnum.SUB_CLASS.getName()) || set.contains(RelationshipEnum.INDIVIDUAL.getName()))
-                return RelationshipEnum.SUB_CLASS.getName();
-            else
-                return RelationshipEnum.INDIVIDUAL.getName();
-        } else {
-            response = getRelationship(name, 1);
-            composeRelationships(response, set);
-            if (set.contains(RelationshipEnum.SUB_CLASS.getName()))
-                return RelationshipEnum.SUB_CLASS.getName();
-            else
-                return RelationshipEnum.INDIVIDUAL.getName();
-        }
+        return null;
     }
 
     public Graph queryPath(String name, int degree) throws IOException {

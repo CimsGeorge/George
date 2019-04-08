@@ -7,20 +7,22 @@ package edu.tongji.cims.kgt.service;
 
 class CypherService {
 
-    final static String MERGE_CLASS = "merge (n:class{name:{props}.prop1}) on create set n = {props} return n";
-    final static String MERGE_INDIVIDUAL = "merge (n:individual{name:{props}.prop1}) on create set n = {props} return n";
+    final static String MERGE_CLASS = "merge (n:class{name:{props}.prop1}) on create set n.name = {props}.prop1 return n";
+    final static String MERGE_INDIVIDUAL = "merge (n:individual{name:{props}.prop1}) on create set n.name = {props}.prop1 return n";
     final static String MERGE_RELATIONSHIP = "match (from:node{name:{props}.prop1}), (to:node{name:{props}.prop3}) merge (from)-[rel:edge]->(to) set rel.name = {props}.prop2";
 
     final static String QUERY_NODE = "match (n:{name:{props}.prop1}) return n";
     final static String QUERY_NODE_IN_FUZZY = "match (n) where n.name =~ {props}.prop1 return n";
     final static String QUERY_NEXT = "match (from{name:{props}.prop1})-[rel]->(to) return to";
 
-    final static String CONTAINS_NODE = "match (n{name:{props}.name}) return n";
+    final static String CONTAINS_NODE = "match (n{name:{props}.prop1}) return n";
 
+    final static String DELETE_CLASS = "match (from:class{name:{props}.prop1})-[rel]-(to) delete from, rel";
+    final static String DELETE_INDIVIDUAL = "match (from:individual{name:{props}.prop1})-[rel]-(to) delete from, rel";
     final static String DELETE_ALL = "match(n) detach delete n";
 
-    static String setProperty(String key) {
-        return "match (n:node{name:{props}.prop1}) set n." + key + " = {props}.prop2";
+    static String setProperty(String componentType, String key) {
+        return "match (n:" + componentType + "{name:{props}.prop1}) set n." + key + " = {props}.prop2";
     }
 
     final static String SHORTEST_PATH = "match p = shortestpath((from{name: {props}.prop1})-[*]-(to{name: {props}.prop2})) return p,extract(x IN rels(p)| startnode(x)) as dir";

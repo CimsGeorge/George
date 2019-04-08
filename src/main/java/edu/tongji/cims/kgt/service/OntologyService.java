@@ -116,7 +116,7 @@ public class OntologyService extends CypherService {
         for (OWLLiteral object : reasoner.getDataPropertyValues(individual, dataProperty.asOWLDataProperty())) {
             String dataPropertyName = getObjectName(dataProperty.asOWLDataProperty());
             String dataPropertyValue = object.getLiteral();
-            batch.statements.add(setProperty(dataPropertyName));
+            batch.statements.add(setProperty(ComponentEnum.INDIVIDUAL.getName(), dataPropertyName));
             batch.parameters.add(new Parameter(individualName, dataPropertyValue));
         }
     }

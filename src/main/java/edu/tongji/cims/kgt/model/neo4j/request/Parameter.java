@@ -22,7 +22,7 @@ public class Parameter {
     public Parameter(String ...props) {
         this.props = new HashMap<>();
         for (int i = 1; i <= props.length; i++)
-            this.props.put("prop" + i, standardize(props[i]));
+            this.props.put("prop" + i, standardize(props[i - 1]));
     }
 
     private String standardize(String s) {

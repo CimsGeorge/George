@@ -45,6 +45,17 @@ public class KnowledgeGraphClient {
     /**
      *
      * @param name
+     * @param properties
+     * @return
+     * @throws IOException
+     */
+    public Boolean saveClass(String name, Map<String, String> properties) throws IOException {
+        return judge(neo4jService.saveClass(name, properties));
+    }
+
+    /**
+     *
+     * @param name
      * @return
      * @throws IOException
      */
@@ -53,24 +64,36 @@ public class KnowledgeGraphClient {
     }
 
     /**
-     * get all properties of a node.
-     * @param name the name of node
-     * @return the map of this node's properties
+     *
+     * @param name
+     * @param properties
+     * @return
      * @throws IOException
      */
-    public Map<String, String> getNodeProperties(String name) throws IOException {
-        return neo4jService.getNodeProperties(name);
+    public Boolean saveIndividual(String name, Map<String, String> properties) throws IOException {
+        return judge(neo4jService.saveIndividual(name, properties));
     }
 
     /**
-     * set properties of a node.
-     * @param name the name of node
-     * @param properties the map of properties to set
-     * @return true if properties are set successfully
+     *
+     * @param name
+     * @param properties
+     * @return
      * @throws IOException
      */
-    public Boolean setNodeProperties(String name, Map<String, String> properties) throws IOException {
-        return judge(neo4jService.setNodeProperties(name, properties));
+    public Boolean updateClassProperty(String name, Map<String, String> properties) throws IOException {
+        return judge(neo4jService.updateClassProperty(name, properties));
+    }
+
+    /**
+     *
+     * @param name
+     * @param properties
+     * @return
+     * @throws IOException
+     */
+    public Boolean updateIndividualProperty(String name, Map<String, String> properties) throws IOException {
+        return judge(neo4jService.updateIndividualProperty(name, properties));
     }
 
     /**
