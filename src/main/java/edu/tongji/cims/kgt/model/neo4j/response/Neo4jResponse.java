@@ -1,4 +1,4 @@
-package edu.tongji.cims.kgt.model;
+package edu.tongji.cims.kgt.model.neo4j.response;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -17,5 +17,6 @@ public class Neo4jResponse {
 
     private List<Result> results;
     private List<Object> errors;
+
 }
 

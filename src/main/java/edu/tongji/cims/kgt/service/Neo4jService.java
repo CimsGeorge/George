@@ -3,20 +3,18 @@ package edu.tongji.cims.kgt.service;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import edu.tongji.cims.kgt.model.Cypher;
-import edu.tongji.cims.kgt.model.Data;
 import edu.tongji.cims.kgt.model.Graph;
 import edu.tongji.cims.kgt.model.Link;
-import edu.tongji.cims.kgt.model.Neo4jResponse;
 import edu.tongji.cims.kgt.model.Node;
-import edu.tongji.cims.kgt.model.Parameter;
-import edu.tongji.cims.kgt.model.QueryProp;
-import edu.tongji.cims.kgt.model.RelationEnum;
-import edu.tongji.cims.kgt.model.RequestBody;
-import edu.tongji.cims.kgt.model.Statement;
+import edu.tongji.cims.kgt.model.neo4j.request.Batch;
+import edu.tongji.cims.kgt.model.neo4j.request.Neo4jRequest;
+import edu.tongji.cims.kgt.model.neo4j.request.Parameter;
+import edu.tongji.cims.kgt.model.neo4j.request.Statement;
+import edu.tongji.cims.kgt.model.neo4j.response.Data;
+import edu.tongji.cims.kgt.model.neo4j.response.Neo4jResponse;
+import edu.tongji.cims.kgt.model.ontology.RelationshipEnum;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -36,7 +34,8 @@ import java.util.Set;
  * @author Yue Lin
  * @version 0.0.1
  */
-public class Neo4jService {
+
+public class Neo4jService extends CypherService {
 
     /**
      * 请求Neo4j的httpClient连接池
@@ -53,65 +52,65 @@ public class Neo4jService {
     }
 
     private String url;
-    private CloseableHttpClient client;
+    private CloseableHttpClient httpClient;
 
     public Neo4jService(String uri) {
         this.url = uri + "/db/data/transaction/commit";
-        client = HttpClientConfig.getHttpClient();
+        httpClient = HttpClientConfig.getHttpClient();
     }
 
-    public Neo4jResponse mergeNode(String name) throws IOException {
-        String statement = Cypher.MERGE_NODE;
-        return handler(statement, new QueryProp(name).getProps());
+    public Neo4jResponse saveClass(String name) throws IOException {
+        return execute(MERGE_CLASS, name);
     }
 
-    public Neo4jResponse mergeNode(String name, Map<String, String> properties) throws IOException {
-        mergeNode(name);
-        return setNodeProperties(name, properties);
+    public Neo4jResponse saveClass(String name, Map<String, String> properties) {
+        return null;
     }
 
-    public Neo4jResponse mergeTriple(String fromName, String relName, String toName) throws IOException {
-        mergeNode(fromName);
-        mergeNode(toName);
-        String statement = Cypher.MERGE_EDGE;
-        return handler(statement, new QueryProp(fromName, relName, toName).getProps());
+    public Neo4jResponse saveIndividual(String name) throws IOException {
+        return execute(MERGE_INDIVIDUAL, name);
     }
 
-    public List<Node> queryNodeInFuzzy(String name) throws IOException {
-        String statement = Cypher.QUERY_NODE_IN_FUZZY;
+    public Neo4jResponse saveSubClass(String superClassName, String subClassName) {
+        return null;
+    }
+
+    public List<Node> getNodeInFuzzy(String name) throws IOException {
         name = ".*" + name + ".*";
-        return composeFuzzyNodes(handler(statement, new QueryProp(name).getProps()));
+        return composeFuzzyNodes(execute(QUERY_NODE_IN_FUZZY, name));
     }
 
-    public List<Node> queryNodeInFuzzyByProperty(String propertyKey, String propertyValue) throws IOException {
+    public Neo4jResponse removeAll() throws IOException {
+        return execute(DELETE_ALL);
+    }
+
+    public List<Node> queryNodeInFuzzyByProperty(String propertyKey, String propertyValue) {
         return null;
     }
 
     public List<Node> queryNext(String name) throws IOException {
-        String statement = Cypher.QUERY_NEXT;
-        handler(statement, new QueryProp(name).getProps());
+        execute(QUERY_NEXT, name);
         return null;
     }
 
     public Boolean containsNode(String name) throws IOException {
-        String statement = Cypher.CONTAINS_NODE;
-        return handler(statement, new QueryProp(name).getProps()).getResults().get(0).getData().size() > 0;
+        return execute(CONTAINS_NODE, name).getResults().get(0).getData().size() > 0;
     }
 
     public Map<String, String> getNodeProperties(String name) throws IOException {
-        String statement = Cypher.QUERY_NODE;
-        return getNodeProperties(handler(statement, new QueryProp(name).getProps()));
+        String statement = CypherService.QUERY_NODE;
+        return getNodeProperties(execute(statement, name));
     }
 
     public Neo4jResponse setNodeProperties(String name, Map<String, String> properties) throws IOException {
         List<String> statements = new ArrayList<>();
         List<Parameter> parameters = new ArrayList<>();
         for (Map.Entry<String, String> e : properties.entrySet()) {
-            String statement = Cypher.setProperty(e.getKey());
+            String statement = CypherService.setProperty(e.getKey());
             statements.add(statement);
-            parameters.add(new Parameter(new QueryProp(name, e.getValue()).getProps()));
+            parameters.add(new Parameter(name, e.getValue()));
         }
-        return handler(statements, parameters);
+        return execute(statements, parameters);
     }
 
     public String getNodeType(String name) throws IOException {
@@ -119,32 +118,39 @@ public class Neo4jService {
         Set<String> set = new HashSet<>();
         composeRelationships(response, set);
         if (!set.isEmpty()) {
-            if (set.contains(RelationEnum.SUB_CLASS.getName()) || set.contains(RelationEnum.INSTANCE.getName()))
-                return RelationEnum.SUB_CLASS.getName();
+            if (set.contains(RelationshipEnum.SUB_CLASS.getName()) || set.contains(RelationshipEnum.INDIVIDUAL.getName()))
+                return RelationshipEnum.SUB_CLASS.getName();
             else
-                return RelationEnum.INSTANCE.getName();
+                return RelationshipEnum.INDIVIDUAL.getName();
         } else {
             response = getRelationship(name, 1);
             composeRelationships(response, set);
-            if (set.contains(RelationEnum.SUB_CLASS.getName()))
-                return RelationEnum.SUB_CLASS.getName();
+            if (set.contains(RelationshipEnum.SUB_CLASS.getName()))
+                return RelationshipEnum.SUB_CLASS.getName();
             else
-                return RelationEnum.INSTANCE.getName();
+                return RelationshipEnum.INDIVIDUAL.getName();
         }
     }
 
     public Graph queryPath(String name, int degree) throws IOException {
-        String statement = Cypher.queryPath(degree);
-        return composeGraph(handler(statement, new QueryProp(name).getProps()));
+        return composeGraph(execute(queryPath(degree), name));
     }
 
-    public Graph queryShortestPath(String from, String to) throws IOException {
-        String statement = Cypher.SHORTEST_PATH;
-        return composeGraph(handler(statement, new QueryProp(from, to).getProps()));
+    public Graph queryShortestPath(String fromName, String toName) throws IOException {
+        return composeGraph(execute(SHORTEST_PATH, fromName, toName));
     }
 
-    public Neo4jResponse query(String statement) throws IOException {
-        return handler(statement, new HashMap<>());
+    public Neo4jResponse execute(String statement, String ...props) throws IOException {
+        Batch batch = new Batch();
+        batch.statements.add(statement);
+        batch.parameters.add(new Parameter(props));
+        return execute(batch);
+    }
+
+    Neo4jResponse execute(Batch batch) throws IOException {
+        if (batch.statements.size() != 0)
+            return execute(batch.statements, batch.parameters);
+        return new Neo4jResponse();
     }
 
     private Graph composeGraph(Neo4jResponse neo4jResponse) {
@@ -209,8 +215,7 @@ public class Neo4jService {
     }
 
     private Neo4jResponse getRelationship(String name, int dir) throws IOException {
-        String statement = Cypher.getRelationShip(dir);
-        return handler(statement, new QueryProp(name).getProps());
+        return execute(getRelationShip(dir), name);
     }
 
     private void composeRelationships(Neo4jResponse neo4jResponse, Set<String> relationship) {
@@ -222,48 +227,27 @@ public class Neo4jService {
         }
     }
 
-    private Neo4jResponse handler(String statement, Map<String, String> props) throws IOException {
-        List<String> stringList = new ArrayList<>();
-        stringList.add(statement);
-        List<Parameter> parameterList = new ArrayList<>();
-        parameterList.add(new Parameter(props));
-        return handler(stringList, parameterList);
-    }
-
-    Neo4jResponse handler(List<String> statementList, List<Parameter> parameterList) throws IOException {
+    private Neo4jResponse execute(List<String> statementList, List<Parameter> parameterList) throws IOException {
         List<Statement> statements = new ArrayList<>();
         for (int i = 0; i < statementList.size(); i++)
             statements.add(new Statement(statementList.get(i), parameterList.get(i)));
-        return post(new RequestBody(statements));
+        return post(new Neo4jRequest(statements));
     }
 
-    private Neo4jResponse get(RequestBody requestBody) throws IOException {
-        String reqBody = JSONObject.toJSONString(requestBody);
-        HttpGet httpGet = new HttpGet(url + reqBody);
-        httpGet.setHeader("X-Stream", "true");
-        httpGet.setHeader("Accept", "application/json;charset=UTF-8");
-        httpGet.setHeader("Content-Type", "application/json");
-        try (CloseableHttpResponse response = client.execute(httpGet)) {
-            HttpEntity entity = response.getEntity();
-            String entityString = EntityUtils.toString(entity, "utf-8");
-            System.out.println(entityString);
-            return JSONObject.parseObject(entityString, Neo4jResponse.class);
-        }
-    }
-
-    private Neo4jResponse post(RequestBody requestBody) throws IOException {
+    private Neo4jResponse post(Neo4jRequest neo4jRequest) throws IOException {
         HttpPost httpPost = new HttpPost(url);
         httpPost.setHeader("X-Stream", "true");
         httpPost.setHeader("Accept", "application/json;charset=UTF-8");
         httpPost.setHeader("Content-Type", "application/json");
-        String reqBody = JSONObject.toJSONString(requestBody);
+        String reqBody = JSONObject.toJSONString(neo4jRequest);
         System.out.println(reqBody);
         httpPost.setEntity(new StringEntity(reqBody, "utf-8"));
-        try (CloseableHttpResponse response = client.execute(httpPost)) {
+        try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
             HttpEntity entity = response.getEntity();
             String entityString = EntityUtils.toString(entity, "utf-8");
             System.out.println(entityString);
             return JSONObject.parseObject(entityString, Neo4jResponse.class);
         }
     }
+
 }

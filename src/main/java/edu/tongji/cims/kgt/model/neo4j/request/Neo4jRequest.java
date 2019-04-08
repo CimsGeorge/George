@@ -1,5 +1,6 @@
-package edu.tongji.cims.kgt.model;
+package edu.tongji.cims.kgt.model.neo4j.request;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,12 +13,9 @@ import java.util.List;
 
 @Getter
 @Setter
-public class RequestBody {
+@AllArgsConstructor
+public class Neo4jRequest {
 
     private List<Statement> statements;
-
-    public RequestBody(List<Statement> statements) {
-        this.statements = statements;
-    }
 
 }

@@ -1,8 +1,8 @@
 package edu.tongji.cims.kgt;
 
 import edu.tongji.cims.kgt.model.Graph;
-import edu.tongji.cims.kgt.model.Neo4jResponse;
 import edu.tongji.cims.kgt.model.Node;
+import edu.tongji.cims.kgt.model.neo4j.response.Neo4jResponse;
 import edu.tongji.cims.kgt.service.Neo4jService;
 import edu.tongji.cims.kgt.service.OntologyService;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
@@ -13,11 +13,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * a client to handle ontology and neo4j.
+ * A knowledge graph client to handle ontology and neo4j.
  * @author Yue Lin
  * @version 0.0.1
  */
-public class Client {
+
+public class KnowledgeGraphClient {
 
     private Neo4jService neo4jService;
     private OntologyService ontologyService;
@@ -26,41 +27,29 @@ public class Client {
      *
      * @param uri the uri to connect neo4j
      */
-    public Client(String uri) {
+    public KnowledgeGraphClient(String uri) {
         neo4jService = new Neo4jService(uri);
         ontologyService = new OntologyService(neo4jService);
     }
 
     /**
      *
-     * @param name the name of node
+     * @param name
      * @return
      * @throws IOException
      */
-    public Boolean mergeNode(String name) throws IOException {
-        return judge(neo4jService.mergeNode(name));
+    public Boolean saveClass(String name) throws IOException {
+        return judge(neo4jService.saveClass(name));
     }
 
     /**
      *
      * @param name
-     * @param properties
      * @return
      * @throws IOException
      */
-    public Boolean mergeNode(String name, Map<String, String> properties) throws IOException {
-        return judge(neo4jService.mergeNode(name, properties));
-    }
-
-    /**
-     *
-     * @param fromName
-     * @param relName
-     * @param toName
-     * @return
-     */
-    public Boolean mergeTriple(String fromName, String relName, String toName) throws IOException {
-        return judge(neo4jService.mergeTriple(fromName, relName, toName));
+    public Boolean saveIndividual(String name) throws IOException {
+        return judge(neo4jService.saveIndividual(name));
     }
 
     /**
@@ -157,14 +146,26 @@ public class Client {
         return neo4jService.queryShortestPath(fromName, toName);
     }
 
+    public Boolean deleteNode(String name) {
+        return true;
+    }
+
+    public Boolean deleteTriple(String fromName, String relName, String toName) {
+        return true;
+    }
+
+    public Boolean removeAll() throws IOException {
+        return judge(neo4jService.removeAll());
+    }
+
     /**
      *
      * @param statement
      * @return
      * @throws IOException
      */
-    public Neo4jResponse query(String statement) throws IOException {
-        return neo4jService.query(statement);
+    public Neo4jResponse execute(String statement) throws IOException {
+        return neo4jService.execute(statement);
     }
 
     /**
@@ -173,7 +174,7 @@ public class Client {
      * @return true if this ontology file is parsed successfully
      * @throws OWLOntologyCreationException
      */
-    public Boolean parseOntology(File file) throws OWLOntologyCreationException {
+    public Boolean parseOntology(File file) throws OWLOntologyCreationException, IOException {
         return ontologyService.parse(file);
     }
 

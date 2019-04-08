@@ -18,4 +18,5 @@ public class Graph {
 
     private Set<Node> nodes;
     private Set<Link> links;
+
 }

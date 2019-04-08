@@ -1,12 +1,11 @@
 package edu.tongji.cims.kgt.service;
 
-import edu.tongji.cims.kgt.model.ClassPair;
-import edu.tongji.cims.kgt.model.Cypher;
-import edu.tongji.cims.kgt.model.Parameter;
-import edu.tongji.cims.kgt.model.QueryProp;
-import edu.tongji.cims.kgt.model.RelationEnum;
-import edu.tongji.cims.kgt.util.Tokenizer;
-import lombok.extern.slf4j.Slf4j;
+import edu.tongji.cims.kgt.model.neo4j.request.Batch;
+import edu.tongji.cims.kgt.model.neo4j.request.Parameter;
+import edu.tongji.cims.kgt.model.neo4j.response.Neo4jResponse;
+import edu.tongji.cims.kgt.model.ontology.ComponentEnum;
+import edu.tongji.cims.kgt.model.ontology.OWLNamedClass;
+import edu.tongji.cims.kgt.model.ontology.RelationshipEnum;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataProperty;
@@ -18,17 +17,14 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.BufferingMode;
+import org.semanticweb.owlapi.reasoner.Node;
+import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.SimpleConfiguration;
 import org.semanticweb.owlapi.reasoner.structural.StructuralReasoner;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
@@ -36,123 +32,92 @@ import java.util.stream.Stream;
  * @version 0.0.1
  */
 
-@Slf4j
-public class OntologyService {
+public class OntologyService extends CypherService {
 
     private OWLOntology ontology;
     private OWLReasoner reasoner;
     private Neo4jService neo4jService;
+    private Batch batch;
 
     public OntologyService(Neo4jService neo4jService) {
         this.neo4jService = neo4jService;
     }
 
-    public Boolean parse(File file) throws OWLOntologyCreationException {
+    public Boolean parse(File file) throws OWLOntologyCreationException, IOException {
         OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
         ontology = manager.loadOntologyFromOntologyDocument(file);
-        reasoner = new StructuralReasoner(ontology, new SimpleConfiguration(), BufferingMode.BUFFERING);
-        Stream<OWLClass> classes = ontology.classesInSignature(Imports.INCLUDED).filter(c -> !getObjectName(c).equals("owl:Thing"));
-        Stream<ClassPair> classPairs = classes.map(c -> {
-            try {
-                return handleRelation(reasoner, c);
-            } catch (IOException e) {
-                // todo return
-                e.printStackTrace();
-            }
-            // todo handle error
-            return null;
+        reasoner = new StructuralReasoner(ontology, new SimpleConfiguration(), BufferingMode.BUFFERING);  // 推理机
+        batch = new Batch();
+        // 获取除了owl:thing之外的所有类
+        Stream<OWLClass> classes = ontology.classesInSignature(Imports.INCLUDED).
+                filter(c -> !getObjectName(c).equals(ComponentEnum.OWL_THING.getName()));
+        classes.forEach(c -> {
+            OWLNamedClass owlNamedClass = parseRelation(c);
+            parseIndividual(owlNamedClass);
         });
-        classPairs.filter(Objects::nonNull).forEach(c -> {
-            try {
-                handleIndividual(ontology, reasoner, c.getClazz(), c.getName());
-            } catch (IOException e) {
-                // todo return
-                e.printStackTrace();
-            }
-        });
-        return true;
+        Neo4jResponse response = neo4jService.execute(batch);
+        return response.getErrors().size() == 0;
     }
 
-    private ClassPair handleRelation(OWLReasoner reasoner, OWLClass owlClass) throws IOException {
-        String className = getObjectName(owlClass);
-        neo4jService.mergeNode(className);
-//        NodeSet<OWLClass> superClasses = reasoner.getSuperClasses(owlClass, true);
-        List<String> statements = new ArrayList<>();
-        List<Parameter> parameters = new ArrayList<>();
-        for (org.semanticweb.owlapi.reasoner.Node<OWLClass> parentOWLNode : reasoner.getSuperClasses(owlClass, true)) {
-            OWLClass parent = parentOWLNode.getRepresentativeElement();
-            String parentName = getObjectName(parent);
-            if (!parentName.equals("owl:Thing")) {
-                statements.add(Cypher.MERGE_NODE);
-                parameters.add(new Parameter(new QueryProp(parentName).getProps()));
-                statements.add(Cypher.MERGE_EDGE);
-                parameters.add(new Parameter(new QueryProp(className, RelationEnum.SUB_CLASS.getName(), parentName).getProps()));
+    private OWLNamedClass parseRelation(OWLClass clazz) {
+        String className = getObjectName(clazz);
+        batch.statements.add(MERGE_CLASS);
+        batch.parameters.add(new Parameter(className));
+
+        NodeSet<OWLClass> superClassNodes = reasoner.getSuperClasses(clazz, true);
+        for (Node<OWLClass> superClassNode : superClassNodes) {
+            OWLClass superClass = superClassNode.getRepresentativeElement();
+            String superClassName = getObjectName(superClass);
+            // 过滤owl:thing类
+            if (!superClassName.equals(ComponentEnum.OWL_THING.getName())) {
+                batch.statements.add(MERGE_CLASS);
+                batch.parameters.add(new Parameter(superClassName));
+                batch.statements.add(MERGE_RELATIONSHIP);
+                batch.parameters.add(new Parameter(superClassName, RelationshipEnum.SUB_CLASS.getName(), className));
             }
         }
-        if (statements.size() != 0)
-            neo4jService.handler(statements, parameters);
-        return new ClassPair(owlClass, className);
+        return new OWLNamedClass(className, clazz);
     }
 
-    private void handleIndividual(OWLOntology ontology, OWLReasoner reasoner, OWLClass owlClass, String nodeName) throws IOException {
-        List<String> statements = new ArrayList<>();
-        List<Parameter> parameters = new ArrayList<>();
-        for (org.semanticweb.owlapi.reasoner.Node<OWLNamedIndividual> individual : reasoner.getInstances(owlClass, true)) {
-            OWLNamedIndividual indi = individual.getRepresentativeElement();
-            String indiName = getObjectName(indi);
-            statements.add(Cypher.MERGE_NODE);
-            parameters.add(new Parameter(new QueryProp(indiName).getProps()));
-            // todo
-            statements.add(Cypher.MERGE_EDGE);
-            parameters.add(new Parameter(new QueryProp(indiName, RelationEnum.INSTANCE.getName(), nodeName).getProps()));
-            neo4jService.handler(statements, parameters);
+    private void parseIndividual(OWLNamedClass clazz) {
+        NodeSet<OWLNamedIndividual> individualNodes = reasoner.getInstances(clazz.getOwlClass(), true);
+        for (Node<OWLNamedIndividual> individualNode : individualNodes) {
+            OWLNamedIndividual individual = individualNode.getRepresentativeElement();
+            String individualName = getObjectName(individual);
+
+            batch.statements.add(MERGE_INDIVIDUAL);
+            batch.parameters.add(new Parameter(individualName));
+            batch.statements.add(MERGE_RELATIONSHIP);
+            batch.parameters.add(new Parameter(clazz.getClassName(), RelationshipEnum.INDIVIDUAL.getName(), individualName));
+
+            // 处理对象属性
             Stream<OWLObjectProperty> objectProperty = ontology.objectPropertiesInSignature();
-            objectProperty.forEach(o -> {
-                try {
-                    handleObjectProperty(reasoner, indi, indiName, o);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-
+            objectProperty.forEach(o -> parseObjectProperty(individualName, individual, o));
+            // 处理数据属性
             Stream<OWLDataProperty> dataProperty = ontology.dataPropertiesInSignature();
-            Map<String, String> props = new HashMap<>();
-            dataProperty.forEach(d -> handleDataProperty(reasoner, indi, d, props));
-            String name = Tokenizer.replaceUnderlineWithSpace(indiName);
-            if (props.size() != 0)
-                neo4jService.setNodeProperties(name, props);
-//            List<String> statementList = new ArrayList<>();
-//            List<Parameter> parameterList = new ArrayList<>();
-//            for (Map.Entry<String, String> e : props.entrySet()) {
-//                String statement = Cypher.setInstanceProperty(e.getKey());
-//                statementList.add(statement);
-//                parameterList.add(new Parameter(new QueryProp(name, e.getValue()).getProps()));
-//            }
-//            if (statementList.size() != 0)
-//                neo4jService.handler(statementList, parameterList);
+            dataProperty.forEach(d -> parseDataProperty(individualName, individual, d));
         }
     }
 
-    private void handleObjectProperty(OWLReasoner reasoner, OWLNamedIndividual indi, String indiName, OWLObjectProperty objectProperty) throws IOException {
-        List<String> statements = new ArrayList<>();
-        List<Parameter> parameters = new ArrayList<>();
-        for (org.semanticweb.owlapi.reasoner.Node<OWLNamedIndividual> object: reasoner.getObjectPropertyValues(indi, objectProperty)) {
-            String relType = getObjectName(objectProperty);
-            String s = getObjectName(object.getRepresentativeElement());
-            statements.add(Cypher.MERGE_NODE);
-            parameters.add(new Parameter(new QueryProp(s).getProps()));
-            statements.add(Cypher.MERGE_EDGE);
-            parameters.add(new Parameter(new QueryProp(s, relType, indiName).getProps()));
+    private void parseObjectProperty(String fromIndividualName, OWLNamedIndividual fromIndividual, OWLObjectProperty objectProperty) {
+        NodeSet<OWLNamedIndividual> toIndividualNodes = reasoner.getObjectPropertyValues(fromIndividual, objectProperty);
+        for (Node<OWLNamedIndividual> individualNode : toIndividualNodes) {
+            String objectPropertyName = getObjectName(objectProperty);
+            String toIndividualName = getObjectName(individualNode.getRepresentativeElement());
+
+            batch.statements.add(MERGE_INDIVIDUAL);
+            batch.parameters.add(new Parameter(toIndividualName));
+            batch.statements.add(MERGE_RELATIONSHIP);
+            batch.parameters.add(new Parameter(fromIndividualName, objectPropertyName, toIndividualName));
         }
-        if (statements.size() != 0)
-            neo4jService.handler(statements, parameters);
     }
 
-    private void handleDataProperty(OWLReasoner reasoner, OWLNamedIndividual indi, OWLDataProperty dataProperty, Map<String, String> props) {
-        for (OWLLiteral object: reasoner.getDataPropertyValues(indi, dataProperty.asOWLDataProperty())) {
-            String relType = getObjectName(dataProperty.asOWLDataProperty());
-            String s = object.getLiteral();
-            props.put(relType, s);
+    private void parseDataProperty(String individualName, OWLNamedIndividual individual, OWLDataProperty dataProperty) {
+        for (OWLLiteral object : reasoner.getDataPropertyValues(individual, dataProperty.asOWLDataProperty())) {
+            String dataPropertyName = getObjectName(dataProperty.asOWLDataProperty());
+            String dataPropertyValue = object.getLiteral();
+            batch.statements.add(setProperty(dataPropertyName));
+            batch.parameters.add(new Parameter(individualName, dataPropertyValue));
         }
     }
 

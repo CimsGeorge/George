@@ -1,4 +1,4 @@
-package edu.tongji.cims.kgt.model;
+package edu.tongji.cims.kgt.model.ontology;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,13 +11,13 @@ import org.semanticweb.owlapi.model.OWLClass;
  * @version 0.0.1
  */
 
+@AllArgsConstructor
 @Getter
 @Setter
 @ToString
-@AllArgsConstructor
-public class ClassPair {
+public class OWLNamedClass {
 
-    private OWLClass clazz;
-    private String name;
+    private String className;
+    private OWLClass owlClass;
 
 }

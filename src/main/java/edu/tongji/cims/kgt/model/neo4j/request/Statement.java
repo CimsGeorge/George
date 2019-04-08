@@ -1,5 +1,6 @@
-package edu.tongji.cims.kgt.model;
+package edu.tongji.cims.kgt.model.neo4j.request;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,13 +11,10 @@ import lombok.Setter;
 
 @Getter
 @Setter
+@AllArgsConstructor
 public class Statement {
 
     private String statement;
     private Parameter parameters;
 
-    public Statement(String statement, Parameter parameters) {
-        this.statement = statement;
-        this.parameters = parameters;
-    }
 }
