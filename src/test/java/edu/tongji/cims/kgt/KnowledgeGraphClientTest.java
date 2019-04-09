@@ -17,12 +17,10 @@ public class KnowledgeGraphClientTest {
     private static KnowledgeGraphClient kgClient = new KnowledgeGraphClient(uri);
 
     public static void main(String[] args) throws IOException, OWLOntologyCreationException {
-        String name = "test1";
-//        saveClassTest(name);
+        String name = "test";
         Map<String, String> properties = new HashMap<>();
         properties.put("size", "2");
-        updateClassPropertyTest(name, properties);
-//        removeAllTest();
+        saveIndividualTest(name, properties);
     }
 
     public static void parseOntology(File file) throws OWLOntologyCreationException, IOException {
@@ -31,6 +29,14 @@ public class KnowledgeGraphClientTest {
 
     public static void saveClassTest(String name) throws IOException {
         System.out.println(kgClient.saveClass(name));
+    }
+
+    public static void saveClassTest(String name, Map<String, String> properties) throws IOException {
+        System.out.println(kgClient.saveClass(name, properties));
+    }
+
+    public static void saveIndividualTest(String name,Map<String,String> properties) throws IOException {
+        System.out.println(kgClient.saveIndividual(name, properties));
     }
 
     public static void updateClassPropertyTest(String name, Map<String, String> properties) throws IOException {

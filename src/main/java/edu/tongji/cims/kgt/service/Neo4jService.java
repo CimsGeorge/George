@@ -76,7 +76,7 @@ public class Neo4jService extends CypherService {
     }
 
     public Neo4jResponse saveIndividual(String name, Map<String, String> properties) throws IOException {
-        return null;
+        return saveNodeWithProperty(ComponentEnum.INDIVIDUAL, name, properties);
     }
 
     public Neo4jResponse updateClassProperty(String name, Map<String, String> properties) throws IOException {
