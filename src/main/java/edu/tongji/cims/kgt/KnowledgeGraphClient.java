@@ -14,7 +14,7 @@ import java.util.Map;
 
 /**
  * A knowledge graph client to handle ontology and neo4j.
- * @author Yue Lin
+ * @author Yue Lin, RuHan Yang
  * @version 0.0.1
  */
 
