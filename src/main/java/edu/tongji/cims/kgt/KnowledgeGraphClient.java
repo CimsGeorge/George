@@ -1,7 +1,7 @@
 package edu.tongji.cims.kgt;
 
-import edu.tongji.cims.kgt.model.Graph;
-import edu.tongji.cims.kgt.model.Node;
+import edu.tongji.cims.kgt.model.neo4j.Graph;
+import edu.tongji.cims.kgt.model.neo4j.Node;
 import edu.tongji.cims.kgt.model.neo4j.response.Neo4jResponse;
 import edu.tongji.cims.kgt.service.Neo4jService;
 import edu.tongji.cims.kgt.service.OntologyService;

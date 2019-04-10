@@ -1,4 +1,4 @@
-package edu.tongji.cims.kgt.model;
+package edu.tongji.cims.kgt.model.neo4j;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,10 +10,10 @@ import lombok.Data;
 
 @AllArgsConstructor
 @Data
-public class Link {
+public class Node {
 
-    private String source;
-    private String target;
     private String name;
+
+//    private Map<String, String> properties;
 
 }

@@ -1,4 +1,4 @@
-package edu.tongji.cims.kgt.model;
+package edu.tongji.cims.kgt.model.neo4j;
 
 import lombok.Getter;
 import lombok.Setter;

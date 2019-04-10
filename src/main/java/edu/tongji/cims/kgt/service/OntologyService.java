@@ -7,9 +7,10 @@ import edu.tongji.cims.kgt.model.ontology.ComponentEnum;
 import edu.tongji.cims.kgt.model.ontology.OWLNamedClass;
 import edu.tongji.cims.kgt.model.ontology.RelationshipEnum;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.OWLAnnotationProperty;
+import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataProperty;
+import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
@@ -23,6 +24,8 @@ import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.SimpleConfiguration;
 import org.semanticweb.owlapi.reasoner.structural.StructuralReasoner;
+import org.semanticweb.owlapi.search.EntitySearcher;
+import uk.ac.manchester.cs.owl.owlapi.OWLLiteralImplString;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,25 +56,17 @@ public class OntologyService extends CypherService {
         Stream<OWLClass> classes = ontology.classesInSignature(Imports.INCLUDED).
                 filter(c -> !getObjectName(c).equals(ComponentEnum.OWL_THING.getName()));
         classes.forEach(c -> {
-            OWLNamedClass owlNamedClass = parseRelation(c);
-            parseAnnotation(owlNamedClass);
-//            parseIndividual(owlNamedClass);
+            OWLNamedClass owlNamedClass = parseSubClassRelationShip(c);
+            parseIndividual(owlNamedClass);
         });
         Neo4jResponse response = neo4jService.execute(batch);
         return response.getErrors().size() == 0;
     }
 
-    private void parseAnnotation(OWLNamedClass clazz) {
-        Stream<OWLAnnotationProperty> annotations = clazz.getOwlClass().annotationPropertiesInSignature();
-        annotations.forEach(a -> {
-            String annotationPropertyName = getObjectName(a.asOWLAnnotationProperty());
-            batch.statements.add(setProperty(ComponentEnum.CLASS.getName(), "annotation"));
-            batch.parameters.add(new Parameter(clazz.getClassName(),annotationPropertyName));
-        });
-    }
-
-    private OWLNamedClass parseRelation(OWLClass clazz) {
+    private OWLNamedClass parseSubClassRelationShip(OWLClass clazz) {
         String className = getObjectName(clazz);
+        parseAnnotation(ComponentEnum.CLASS, className, clazz);  // 解析类的annotation
+
         batch.statements.add(MERGE_CLASS);
         batch.parameters.add(new Parameter(className));
 
@@ -95,6 +90,7 @@ public class OntologyService extends CypherService {
         for (Node<OWLNamedIndividual> individualNode : individualNodes) {
             OWLNamedIndividual individual = individualNode.getRepresentativeElement();
             String individualName = getObjectName(individual);
+            parseAnnotation(ComponentEnum.INDIVIDUAL, individualName, individual);  // 解析实例的annotation
 
             batch.statements.add(MERGE_INDIVIDUAL);
             batch.parameters.add(new Parameter(individualName));
@@ -114,6 +110,7 @@ public class OntologyService extends CypherService {
         NodeSet<OWLNamedIndividual> toIndividualNodes = reasoner.getObjectPropertyValues(fromIndividual, objectProperty);
         for (Node<OWLNamedIndividual> individualNode : toIndividualNodes) {
             String objectPropertyName = getObjectName(objectProperty);
+            parseAnnotation(ComponentEnum.RELATIONSHIP, objectPropertyName, objectProperty);  // 解析对象属性的annotation
             String toIndividualName = getObjectName(individualNode.getRepresentativeElement());
 
             batch.statements.add(MERGE_INDIVIDUAL);
@@ -126,10 +123,23 @@ public class OntologyService extends CypherService {
     private void parseDataProperty(String individualName, OWLNamedIndividual individual, OWLDataProperty dataProperty) {
         for (OWLLiteral object : reasoner.getDataPropertyValues(individual, dataProperty.asOWLDataProperty())) {
             String dataPropertyName = getObjectName(dataProperty.asOWLDataProperty());
+//            parseAnnotation(dataPropertyName, dataProperty);  // 解析数据属性的annotation
             String dataPropertyValue = object.getLiteral();
             batch.statements.add(setProperty(ComponentEnum.INDIVIDUAL.getName(), dataPropertyName));
             batch.parameters.add(new Parameter(individualName, dataPropertyValue));
         }
+    }
+
+    private void parseAnnotation(ComponentEnum component, String entityName, OWLEntity entity) {
+        Stream<OWLAnnotation> annotations = EntitySearcher.getAnnotations(entity, ontology);
+        annotations.forEach(a -> {
+            String annotationName = getObjectName(a.getProperty());
+            if (annotationName.contains(":"))  // 去除annotation前缀
+                annotationName = annotationName.substring(annotationName.indexOf(":") + 1);
+            String annotationValue = a.getValue().asLiteral().orElse(new OWLLiteralImplString("")).getLiteral();
+            batch.statements.add(setProperty(component.getName(), annotationName));
+            batch.parameters.add(new Parameter(entityName, annotationValue));
+        });
     }
 
     private static String getObjectName(Object o) {
