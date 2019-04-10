@@ -4,6 +4,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * @author Yue Lin
  * @version 0.0.1

@@ -17,10 +17,11 @@ class CypherService {
     final static String MERGE_ANOTHER_INDIVIDUAL = "match (from:class{name:{props}.prop1}), (to:class{name:{props}.prop2}) " +
             "merge (from)-[rel:relationship]->(to) set rel.name = '" + RelationshipEnum.INDIVIDUAL.getName() + "'";
 
-    final static String MERGE_RELATIONSHIP = "match (from:node{name:{props}.prop1}), (to:node{name:{props}.prop3}) merge (from)-[rel:edge]->(to) set rel.name = {props}.prop2";
+    final static String MERGE_RELATIONSHIP = "match (from{name:{props}.prop1}), (to{name:{props}.prop3}) " +
+            "merge (from)-[rel:relationship]->(to) set rel.name = {props}.prop2";
 
-    final static String QUERY_NODE = "match (n:{name:{props}.prop1}) return n";
-    final static String QUERY_NODE_IN_FUZZY = "match (n) where n.name =~ {props}.prop1 return n";
+    final static String GET_NODE_LABEL = "match (n) where n.name = {props}.prop1 return LABELS(n)";
+
     final static String QUERY_NEXT = "match (from{name:{props}.prop1})-[rel]->(to) return to";
 
     final static String CONTAINS_NODE = "match (n{name:{props}.prop1}) return n";
@@ -29,8 +30,17 @@ class CypherService {
     final static String DELETE_INDIVIDUAL = "match (from:individual{name:{props}.prop1})-[rel]-(to) delete from, rel";
     final static String DELETE_ALL = "match(n) detach delete n";
 
+    static String getNodeByProperty(String key, Boolean fuzzy) {
+        if (fuzzy)
+            return "match (n) where n." + key + " =~ {props}.prop1 return n";
+        return "match (n) where n." + key + " = {props}.prop1 return n";
+    }
+
     static String setProperty(String componentType, String key) {
-        return "match (n:" + componentType + "{name:{props}.prop1}) set n." + key + " = {props}.prop2";
+        if (componentType.equals("relationship"))
+            return "match (from{name:{props}.prop1})-[rel{name:{props}.prop2}]->(to{name:{props}.prop3}) set rel." + key + " = {props}.prop4";
+        else
+            return "match (n:" + componentType + "{name:{props}.prop1}) set n." + key + " = {props}.prop2";
     }
 
     final static String SHORTEST_PATH = "match p = shortestpath((from{name: {props}.prop1})-[*]-(to{name: {props}.prop2})) return p,extract(x IN rels(p)| startnode(x)) as dir";
@@ -44,17 +54,6 @@ class CypherService {
         else if (dir == 1) return "match ()-[rel]->(n{name:{props}.prop1}) return rel";
         else return "match (n:{name:{props}.prop1})-[rel]->() return rel";
     }
-
-
-    private final static String SET_INSTANCE_ALL_PROPERTY = "match (n:node {name: {props}.name}) set n = {props}";
-    private final static String MERGE_NODE_BY_NAME_AND_FIELD = "MERGE (n:node{name:{props}.param1}) " +
-            "ON CREATE SET n = {name:{props}.param1, field:[{props}.param2]} " +
-            "ON MATCH SET n.field = " +
-            "case " +
-            "when all(x IN n.field WHERE x <> {props}.param2) " +
-            "then n.field + {props}.param2 " +
-            "else n.field " +
-            "end";
 
     private final static String CREATE_TRIPLE = "create (from:node{name:{props}.from})-[rel:edge{name:{props}.rel}]->(to:node{name:{props}.to}) return from, rel, to";
     private final static String CREATE_EDGE = "match (from:node{name:{props}.from}), (to:node{name:{props}.to}) create (from)-[rel:edge{name:{props}.rel}]->(to) return rel";
