@@ -90,13 +90,12 @@ public class OntologyService extends CypherService {
         for (Node<OWLNamedIndividual> individualNode : individualNodes) {
             OWLNamedIndividual individual = individualNode.getRepresentativeElement();
             String individualName = getObjectName(individual);
-            parseAnnotation(ComponentEnum.INDIVIDUAL, individualName, individual);  // 解析实例的annotation
-
             batch.statements.add(MERGE_INDIVIDUAL);
             batch.parameters.add(new Parameter(individualName));
             batch.statements.add(MERGE_RELATIONSHIP);
             batch.parameters.add(new Parameter(clazz.getClassName(), RelationshipEnum.INDIVIDUAL.getName(), individualName));
 
+            parseAnnotation(ComponentEnum.INDIVIDUAL, individualName, individual);  // 解析实例的annotation
             // 处理对象属性
             Stream<OWLObjectProperty> objectProperty = ontology.objectPropertiesInSignature();
             objectProperty.forEach(o -> parseObjectProperty(individualName, individual, o));
@@ -110,23 +109,24 @@ public class OntologyService extends CypherService {
         NodeSet<OWLNamedIndividual> toIndividualNodes = reasoner.getObjectPropertyValues(fromIndividual, objectProperty);
         for (Node<OWLNamedIndividual> individualNode : toIndividualNodes) {
             String objectPropertyName = getObjectName(objectProperty);
-            parseAnnotation(ComponentEnum.RELATIONSHIP, objectPropertyName, objectProperty);  // 解析对象属性的annotation
             String toIndividualName = getObjectName(individualNode.getRepresentativeElement());
 
             batch.statements.add(MERGE_INDIVIDUAL);
             batch.parameters.add(new Parameter(toIndividualName));
             batch.statements.add(MERGE_RELATIONSHIP);
             batch.parameters.add(new Parameter(fromIndividualName, objectPropertyName, toIndividualName));
+
+            parseAnnotation(ComponentEnum.RELATIONSHIP, objectPropertyName, objectProperty);  // 解析对象属性的annotation
         }
     }
 
     private void parseDataProperty(String individualName, OWLNamedIndividual individual, OWLDataProperty dataProperty) {
         for (OWLLiteral object : reasoner.getDataPropertyValues(individual, dataProperty.asOWLDataProperty())) {
             String dataPropertyName = getObjectName(dataProperty.asOWLDataProperty());
-//            parseAnnotation(dataPropertyName, dataProperty);  // 解析数据属性的annotation
             String dataPropertyValue = object.getLiteral();
             batch.statements.add(setProperty(ComponentEnum.INDIVIDUAL.getName(), dataPropertyName));
             batch.parameters.add(new Parameter(individualName, dataPropertyValue));
+//            parseAnnotation(dataPropertyName, dataProperty);  // 解析数据属性的annotation
         }
     }
 

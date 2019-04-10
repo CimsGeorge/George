@@ -106,7 +106,7 @@ public class KnowledgeGraphClient {
      * @param propertyValue
      * @return
      */
-    public List<Node> getNameByProperty(String propertyKey, String propertyValue) {
+    public List<Node> getNodeByProperty(String propertyName, String propertyValue) {
         return null;
     }
 
@@ -117,8 +117,8 @@ public class KnowledgeGraphClient {
      * @return
      * @throws IOException
      */
-    public List<Node> queryNodeInFuzzyByProperty(String propertyKey, String propertyValue) throws IOException {
-        return neo4jService.queryNodeInFuzzyByProperty(propertyKey, propertyValue);
+    public List<Node> queryNodeInFuzzyByProperty(String propertyName, String propertyValue) throws IOException {
+        return neo4jService.queryNodeInFuzzyByProperty(propertyName, propertyValue);
     }
 
     /**
