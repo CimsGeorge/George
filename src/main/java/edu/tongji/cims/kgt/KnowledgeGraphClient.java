@@ -53,6 +53,10 @@ public class KnowledgeGraphClient {
         return judge(neo4jService.saveClass(name, properties));
     }
 
+    public Boolean saveSubClass(String superClassName, String subClassName) throws IOException {
+        return judge(neo4jService.saveSubClass(superClassName, subClassName));
+    }
+
     /**
      *
      * @param name

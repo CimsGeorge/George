@@ -1,6 +1,5 @@
 package edu.tongji.cims.kgt.model.neo4j.request;
 
-import edu.tongji.cims.kgt.model.neo4j.request.Parameter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 

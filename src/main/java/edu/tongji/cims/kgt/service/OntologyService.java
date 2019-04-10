@@ -7,6 +7,7 @@ import edu.tongji.cims.kgt.model.ontology.ComponentEnum;
 import edu.tongji.cims.kgt.model.ontology.OWLNamedClass;
 import edu.tongji.cims.kgt.model.ontology.RelationshipEnum;
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLLiteral;
@@ -53,10 +54,20 @@ public class OntologyService extends CypherService {
                 filter(c -> !getObjectName(c).equals(ComponentEnum.OWL_THING.getName()));
         classes.forEach(c -> {
             OWLNamedClass owlNamedClass = parseRelation(c);
-            parseIndividual(owlNamedClass);
+            parseAnnotation(owlNamedClass);
+//            parseIndividual(owlNamedClass);
         });
         Neo4jResponse response = neo4jService.execute(batch);
         return response.getErrors().size() == 0;
+    }
+
+    private void parseAnnotation(OWLNamedClass clazz) {
+        Stream<OWLAnnotationProperty> annotations = clazz.getOwlClass().annotationPropertiesInSignature();
+        annotations.forEach(a -> {
+            String annotationPropertyName = getObjectName(a.asOWLAnnotationProperty());
+            batch.statements.add(setProperty(ComponentEnum.CLASS.getName(), "annotation"));
+            batch.parameters.add(new Parameter(clazz.getClassName(),annotationPropertyName));
+        });
     }
 
     private OWLNamedClass parseRelation(OWLClass clazz) {

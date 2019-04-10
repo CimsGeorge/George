@@ -67,8 +67,15 @@ public class Neo4jService extends CypherService {
         return saveNodeWithProperty(ComponentEnum.CLASS, name, properties);
     }
 
-    public Neo4jResponse saveSubClass(String superClassName, String subClassName) {
-        return null;
+    public Neo4jResponse saveSubClass(String superClassName, String subClassName) throws IOException {
+        Batch batch = new Batch();
+        batch.statements.add(MERGE_CLASS);
+        batch.parameters.add(new Parameter(superClassName));
+        batch.statements.add(MERGE_CLASS);
+        batch.parameters.add(new Parameter(subClassName));
+        batch.statements.add(MERGE_ANOTHER_INDIVIDUAL);
+        batch.parameters.add(new Parameter(superClassName, subClassName));
+        return execute(batch);
     }
 
     public Neo4jResponse saveIndividual(String name) throws IOException {

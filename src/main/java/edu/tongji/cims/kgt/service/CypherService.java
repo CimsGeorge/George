@@ -1,5 +1,7 @@
 package edu.tongji.cims.kgt.service;
 
+import edu.tongji.cims.kgt.model.ontology.RelationshipEnum;
+
 /**
  * @author Yue Lin
  * @version 0.0.1
@@ -8,7 +10,13 @@ package edu.tongji.cims.kgt.service;
 class CypherService {
 
     final static String MERGE_CLASS = "merge (n:class{name:{props}.prop1}) on create set n.name = {props}.prop1 return n";
+    final static String MERGE_SUB_CLASS = "match (from:class{name:{props}.prop1}), (to:class{name:{props}.prop2}) " +
+            "merge (from)-[rel:relationship]->(to) set rel.name = '" + RelationshipEnum.SUB_CLASS.getName() + "'";
+
     final static String MERGE_INDIVIDUAL = "merge (n:individual{name:{props}.prop1}) on create set n.name = {props}.prop1 return n";
+    final static String MERGE_ANOTHER_INDIVIDUAL = "match (from:class{name:{props}.prop1}), (to:class{name:{props}.prop2}) " +
+            "merge (from)-[rel:relationship]->(to) set rel.name = '" + RelationshipEnum.INDIVIDUAL.getName() + "'";
+
     final static String MERGE_RELATIONSHIP = "match (from:node{name:{props}.prop1}), (to:node{name:{props}.prop3}) merge (from)-[rel:edge]->(to) set rel.name = {props}.prop2";
 
     final static String QUERY_NODE = "match (n:{name:{props}.prop1}) return n";
