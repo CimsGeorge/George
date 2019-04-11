@@ -17,7 +17,7 @@ import java.util.Set;
 @ToString
 public class Graph {
 
-    private Set<Row> nodes;
-    private Set<Row> links;
+    private Set<Node> nodes;
+    private Set<Edge> edges;
 
 }

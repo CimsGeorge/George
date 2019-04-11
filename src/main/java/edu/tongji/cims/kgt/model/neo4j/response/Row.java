@@ -15,7 +15,6 @@ import java.util.Map;
 @Data
 public class Row {
 
-    private String label;
     private List<String> attribute = new ArrayList<>();
     private Map<String, String> properties = new HashMap<>();
 }

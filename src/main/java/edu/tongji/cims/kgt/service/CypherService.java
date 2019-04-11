@@ -9,20 +9,17 @@ import edu.tongji.cims.kgt.model.ontology.RelationshipEnum;
 
 class CypherService {
 
-    final static String MERGE_CLASS = "merge (n:class{name:{props}.prop1}) on create set n.name = {props}.prop1 return n";
-    final static String MERGE_SUB_CLASS = "match (from:class{name:{props}.prop1}), (to:class{name:{props}.prop2}) " +
-            "merge (from)-[rel:relationship]->(to) set rel.name = '" + RelationshipEnum.SUB_CLASS.getName() + "'";
-
-    final static String MERGE_INDIVIDUAL = "merge (n:individual{name:{props}.prop1}) on create set n.name = {props}.prop1 return n";
-    final static String MERGE_ANOTHER_INDIVIDUAL = "match (from:class{name:{props}.prop1}), (to:class{name:{props}.prop2}) " +
-            "merge (from)-[rel:relationship]->(to) set rel.name = '" + RelationshipEnum.INDIVIDUAL.getName() + "'";
-
+    final static String MERGE_CLASS = "merge (n:class{name:{props}.prop1}) on create " +
+            "set n.name = {props}.prop1 return n";
+    final static String MERGE_INDIVIDUAL = "merge (n:individual{name:{props}.prop1}) on create " +
+            "set n.name = {props}.prop1 return n";
     final static String MERGE_RELATIONSHIP = "match (from{name:{props}.prop1}), (to{name:{props}.prop3}) " +
             "merge (from)-[rel:relationship]->(to) set rel.name = {props}.prop2";
 
     final static String GET_NODE_LABEL = "match (n) where n.name = {props}.prop1 return LABELS(n)";
+    final static String GET_DATA_PROPERTY = "match (n) where n.name = {props}.prop1 return n";
 
-    final static String QUERY_NEXT = "match (from{name:{props}.prop1})-[rel]->(to) return to";
+    final static String QUERY_NEXT = "match (from{name:{props}.prop1})-[rel]->(to) return to.name";
 
     final static String CONTAINS_NODE = "match (n{name:{props}.prop1}) return n";
 
@@ -32,8 +29,8 @@ class CypherService {
 
     static String getNodeByProperty(String key, Boolean fuzzy) {
         if (fuzzy)
-            return "match (n) where n." + key + " =~ {props}.prop1 return n";
-        return "match (n) where n." + key + " = {props}.prop1 return n";
+            return "match (n) where n." + key + " =~ {props}.prop1 return n.name";
+        return "match (n) where n." + key + " = {props}.prop1 return n.name";
     }
 
     static String setProperty(String componentType, String key) {
@@ -48,6 +45,13 @@ class CypherService {
 //        return "match p=(from:node{name:{props}.name})-[rel*1.." + degree + "]-(to:node) where all(x in rels(p) where x.name <> '实例') RETURN p,extract(x IN rels(p)| startnode(x)) as dir";
         return "match p=(from{name:{props}.prop1})-[rel*0.." + degree + "]-(to) return p,extract(x IN rels(p)| startnode(x)) as dir";
     }
+
+
+
+    final static String MERGE_SUB_CLASS = "match (from:class{name:{props}.prop1}), (to:class{name:{props}.prop2}) " +
+            "merge (from)-[rel:relationship]->(to) set rel.name = '" + RelationshipEnum.SUB_CLASS.getName() + "'";
+    final static String MERGE_ANOTHER_INDIVIDUAL = "match (from:class{name:{props}.prop1}), (to:class{name:{props}.prop2}) " +
+            "merge (from)-[rel:relationship]->(to) set rel.name = '" + RelationshipEnum.INDIVIDUAL.getName() + "'";
     // 0: all, 1: in, 2: out
     static String getRelationShip(int dir) {
         if (dir == 0) return "match (n{name:{props}.prop1})-[rel]-() return rel";

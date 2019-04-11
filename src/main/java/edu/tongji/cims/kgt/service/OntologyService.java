@@ -32,7 +32,7 @@ import java.io.IOException;
 import java.util.stream.Stream;
 
 /**
- * @author Yue Lin, RuHan Yang
+ * @author Yue Lin
  * @version 0.0.1
  */
 

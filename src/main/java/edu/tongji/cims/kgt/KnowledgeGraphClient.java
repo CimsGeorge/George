@@ -1,8 +1,8 @@
 package edu.tongji.cims.kgt;
 
 import edu.tongji.cims.kgt.model.neo4j.Graph;
+import edu.tongji.cims.kgt.model.neo4j.Node;
 import edu.tongji.cims.kgt.model.neo4j.response.Neo4jResponse;
-import edu.tongji.cims.kgt.model.neo4j.response.Row;
 import edu.tongji.cims.kgt.service.Neo4jService;
 import edu.tongji.cims.kgt.service.OntologyService;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
@@ -107,12 +107,8 @@ public class KnowledgeGraphClient {
      * @return
      * @throws IOException
      */
-    public List<Row> getNodeByProperty(String propertyName, String propertyValue, Boolean fuzzy) throws IOException {
+    public List<Node> getNodeByProperty(String propertyName, String propertyValue, Boolean fuzzy) throws IOException {
         return neo4jService.getNodeByProperty(propertyName, propertyValue, fuzzy);
-    }
-
-    public List<Row> getNodeLabel(String name) throws IOException {
-        return neo4jService.getNodeLabel(name);
     }
 
     /**
@@ -121,7 +117,7 @@ public class KnowledgeGraphClient {
      * @return
      * @throws IOException
      */
-    public List<Row> getNext(String name) throws IOException {
+    public List<Node> getNext(String name) throws IOException {
         return neo4jService.getNext(name);
     }
 
@@ -131,9 +127,19 @@ public class KnowledgeGraphClient {
      * @return
      * @throws IOException
      */
-//    public String getNodeType(String name) throws IOException {
-//        return neo4jService.getNodeType(name);
-//    }
+    public String getNodeType(String name) throws IOException {
+        return neo4jService.getNodeType(name);
+    }
+
+    /**
+     *
+     * @param name
+     * @return
+     * @throws IOException
+     */
+    public Map<String, String> getNodeProperty(String name) throws IOException {
+        return neo4jService.getNodeProperty(name);
+    }
 
     /**
      *
@@ -147,14 +153,13 @@ public class KnowledgeGraphClient {
 
     /**
      *
-     * @param name the name of node
+     * @param name
      * @param degree
      * @return
      * @throws IOException
      */
-    public Graph queryPath(String name, int degree) throws IOException {
-//        return neo4jService.queryPath(name, degree);
-        return null;
+    public Graph getPath(String name, int degree) throws IOException {
+        return neo4jService.getPath(name, degree);
     }
 
     /**
@@ -164,30 +169,46 @@ public class KnowledgeGraphClient {
      * @return
      * @throws IOException
      */
-    public Graph queryShortestPath(String fromName, String toName) throws IOException {
-//        return neo4jService.queryShortestPath(fromName, toName);
-        return null;
+    public Graph getShortestPath(String fromName, String toName) throws IOException {
+        return neo4jService.getShortestPath(fromName, toName);
     }
 
-    public Boolean deleteNode(String name) {
-        return true;
+    /**
+     *
+     * @param name
+     * @return
+     * @throws IOException
+     */
+    public Boolean removeClass(String name) throws IOException {
+        return judge(neo4jService.removeClass(name));
     }
 
-    public Boolean deleteTriple(String fromName, String relName, String toName) {
-        return true;
+    /**
+     *
+     * @param name
+     * @return
+     * @throws IOException
+     */
+    public Boolean removeIndividual(String name) throws IOException {
+        return judge(neo4jService.removeIndividual(name));
     }
 
+    /**
+     *
+     * @return
+     * @throws IOException
+     */
     public Boolean removeAll() throws IOException {
         return judge(neo4jService.removeAll());
     }
 
     /**
-     *
+     * 暂时不开放
      * @param statement
      * @return
      * @throws IOException
      */
-    public Neo4jResponse execute(String statement) throws IOException {
+    private Neo4jResponse execute(String statement) throws IOException {
         return neo4jService.execute(statement);
     }
 
