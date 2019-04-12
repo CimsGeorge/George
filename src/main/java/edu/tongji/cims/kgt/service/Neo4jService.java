@@ -107,8 +107,13 @@ public class Neo4jService extends CypherService {
     public List<Node> getNodeByProperty(String propertyName, String propertyValue, Boolean fuzzy) throws IOException {
         if (fuzzy)
             propertyValue = ".*" + propertyValue + ".*";
-        return composeNodeList(parseNeo4jResponseRow(
+        return composeNodeListFromRowAttribute(parseNeo4jResponseRow(
                 execute(getNodeByProperty(propertyName, fuzzy), propertyValue)));
+    }
+
+    public List<Node> getIndividual(String className) throws IOException {
+        return composeNodeListFromRowAttribute(parseNeo4jResponseRow(
+                execute(GET_INDIVIDUAL, className)));
     }
 
     public String getNodeType(String name) throws IOException {
@@ -136,7 +141,7 @@ public class Neo4jService extends CypherService {
     }
 
     public List<Node> getNext(String name) throws IOException {
-        return composeNodeList(parseNeo4jResponseRow(execute(QUERY_NEXT, name)));
+        return composeNodeListFromRowAttribute(parseNeo4jResponseRow(execute(QUERY_NEXT, name)));
     }
 
     public Boolean containsNode(String nodeName) throws IOException {
@@ -149,6 +154,10 @@ public class Neo4jService extends CypherService {
 
     public Graph getShortestPath(String fromName, String toName) throws IOException {
         return composeGraph(execute(SHORTEST_PATH, fromName, toName));
+    }
+
+    public Graph getAllNodesAndRelationships() throws IOException {
+        return composeGraph(execute(GET_ALL));
     }
 
     public Neo4jResponse execute(String statement, String ...props) throws IOException {
@@ -251,7 +260,7 @@ public class Neo4jService extends CypherService {
         nodeSet.add(new Node(nodes.getJSONObject(nodes.size() - 1).get("name").toString()));
     }
 
-    private List<Node> composeNodeList(List<Row> rows) {
+    private List<Node> composeNodeListFromRowAttribute(List<Row> rows) {
         return rows.stream().map(r -> new Node(r.getAttribute().get(0))).collect(Collectors.toList());
     }
 
@@ -287,12 +296,12 @@ public class Neo4jService extends CypherService {
         httpPost.setHeader("Accept", "application/json;charset=UTF-8");
         httpPost.setHeader("Content-Type", "application/json");
         String reqBody = JSONObject.toJSONString(neo4jRequest);
-        System.out.println(reqBody);
+//        System.out.println(reqBody);
         httpPost.setEntity(new StringEntity(reqBody, "utf-8"));
         try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
             HttpEntity entity = response.getEntity();
             String entityString = EntityUtils.toString(entity, "utf-8");
-            System.out.println(entityString);
+//            System.out.println(entityString);
             return JSONObject.parseObject(entityString, Neo4jResponse.class);
         }
     }

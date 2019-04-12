@@ -27,6 +27,15 @@ class CypherService {
     final static String DELETE_INDIVIDUAL = "match (from:individual{name:{props}.prop1})-[rel]-(to) delete from, rel";
     final static String DELETE_ALL = "match(n) detach delete n";
 
+    final static String GET_INDIVIDUAL = "match (from:class{name:{props}.prop1})-[rel:relationship{name:'individual'}]" +
+            "->(to) return to.name";
+
+    final static String GET_ALL = "match p=(n)-[r]-(t) " +
+            "return p, extract(x in rels(p)| startnode(x)) as dir";
+
+    final static String SHORTEST_PATH = "match p = shortestpath((from{name: {props}.prop1})-[*]-(to{name: {props}.prop2})) " +
+            "return p,extract(x IN rels(p)| startnode(x)) as dir";
+
     static String getNodeByProperty(String key, Boolean fuzzy) {
         if (fuzzy)
             return "match (n) where n." + key + " =~ {props}.prop1 return n.name";
@@ -40,12 +49,10 @@ class CypherService {
             return "match (n:" + componentType + "{name:{props}.prop1}) set n." + key + " = {props}.prop2";
     }
 
-    final static String SHORTEST_PATH = "match p = shortestpath((from{name: {props}.prop1})-[*]-(to{name: {props}.prop2})) return p,extract(x IN rels(p)| startnode(x)) as dir";
     static String queryPath(int degree) {
 //        return "match p=(from:node{name:{props}.name})-[rel*1.." + degree + "]-(to:node) where all(x in rels(p) where x.name <> '实例') RETURN p,extract(x IN rels(p)| startnode(x)) as dir";
         return "match p=(from{name:{props}.prop1})-[rel*0.." + degree + "]-(to) return p,extract(x IN rels(p)| startnode(x)) as dir";
     }
-
 
 
     final static String MERGE_SUB_CLASS = "match (from:class{name:{props}.prop1}), (to:class{name:{props}.prop2}) " +
