@@ -1,6 +1,5 @@
 package edu.tongji.cims.kgt.model.neo4j;
 
-import edu.tongji.cims.kgt.model.neo4j.response.Row;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;

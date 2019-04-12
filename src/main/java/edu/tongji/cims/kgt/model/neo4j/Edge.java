@@ -12,7 +12,7 @@ import lombok.Data;
 @Data
 public class Edge {
 
-    private String name;
     private String source;
     private String target;
+    private String name;
 }
