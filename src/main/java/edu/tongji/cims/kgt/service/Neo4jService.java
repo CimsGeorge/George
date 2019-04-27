@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
  * @version 0.0.1
  */
 
-public class Neo4jService extends CypherService {
+public class Neo4jService {
 
     /**
      * 请求Neo4j的httpClient连接池
@@ -56,14 +56,16 @@ public class Neo4jService extends CypherService {
 
     private String url;
     private CloseableHttpClient httpClient;
+    private CypherService cs;
 
     public Neo4jService(String uri) {
         this.url = uri + "/db/data/transaction/commit";
         httpClient = HttpClientConfig.getHttpClient();
+        cs = new CypherService();
     }
 
     public Neo4jResponse saveClass(String name) throws IOException {
-        return execute(MERGE_CLASS, name);
+        return execute(cs.MERGE_CLASS, name);
     }
 
     public Neo4jResponse saveClass(String name, Map<String, String> properties) throws IOException {
@@ -71,13 +73,13 @@ public class Neo4jService extends CypherService {
     }
 
     public Neo4jResponse saveSubClass(String superClassName, String subClassName) throws IOException {
-        return saveTriple(MERGE_CLASS, superClassName,
-                MERGE_CLASS, subClassName,
-                MERGE_RELATIONSHIP, RelationshipEnum.SUB_CLASS.getName());
+        return saveTriple(cs.MERGE_CLASS, superClassName,
+                cs.MERGE_CLASS, subClassName,
+                cs.MERGE_RELATIONSHIP, RelationshipEnum.SUB_CLASS.getName());
     }
 
     public Neo4jResponse saveIndividual(String name) throws IOException {
-        return execute(MERGE_INDIVIDUAL, name);
+        return execute(cs.MERGE_INDIVIDUAL, name);
     }
 
     public Neo4jResponse saveIndividual(String name, Map<String, String> properties) throws IOException {
@@ -85,15 +87,15 @@ public class Neo4jService extends CypherService {
     }
 
     public Neo4jResponse saveIndividual(String className, String individualName) throws IOException {
-        return saveTriple(MERGE_CLASS, className,
-                MERGE_INDIVIDUAL, individualName,
-                MERGE_RELATIONSHIP, RelationshipEnum.INDIVIDUAL.getName());
+        return saveTriple(cs.MERGE_CLASS, className,
+                cs.MERGE_INDIVIDUAL, individualName,
+                cs.MERGE_RELATIONSHIP, RelationshipEnum.INDIVIDUAL.getName());
     }
 
     public Neo4jResponse saveIndividualTriple(String fromIndividualName, String relationship, String toIndividualName) throws IOException {
-        return saveTriple(MERGE_INDIVIDUAL, fromIndividualName,
-                MERGE_INDIVIDUAL, toIndividualName,
-                MERGE_RELATIONSHIP, relationship);
+        return saveTriple(cs.MERGE_INDIVIDUAL, fromIndividualName,
+                cs.MERGE_INDIVIDUAL, toIndividualName,
+                cs.MERGE_RELATIONSHIP, relationship);
     }
 
     public Neo4jResponse updateClassProperty(String name, Map<String, String> properties) throws IOException {
@@ -108,56 +110,56 @@ public class Neo4jService extends CypherService {
         if (fuzzy)
             propertyValue = ".*" + propertyValue + ".*";
         return composeNodeListFromRowAttribute(parseNeo4jResponseRow(
-                execute(getNodeByProperty(propertyName, fuzzy), propertyValue)));
+                execute(cs.getNodeByProperty(propertyName, fuzzy), propertyValue)));
     }
 
     public List<Node> getIndividual(String className) throws IOException {
         return composeNodeListFromRowAttribute(parseNeo4jResponseRow(
-                execute(GET_INDIVIDUAL, className)));
+                execute(cs.GET_INDIVIDUAL, className)));
     }
 
     public String getNodeType(String name) throws IOException {
-        List<Row> rows = parseNeo4jResponseRow(execute(GET_NODE_LABEL, name));
+        List<Row> rows = parseNeo4jResponseRow(execute(cs.GET_NODE_LABEL, name));
         if (rows.size() == 0) return "";
         return rows.get(0).getAttribute().get(0);
     }
 
     public Map<String, String> getNodeProperty(String name) throws IOException {
-        List<Row> rows = parseNeo4jResponseRow(execute(GET_DATA_PROPERTY, name));
+        List<Row> rows = parseNeo4jResponseRow(execute(cs.GET_DATA_PROPERTY, name));
         if (rows.size() == 0) return new HashMap<>();
         return rows.get(0).getProperties();
     }
 
     public Neo4jResponse removeClass(String name) throws IOException {
-        return execute(DELETE_CLASS, name);
+        return execute(cs.DELETE_CLASS, name);
     }
 
     public Neo4jResponse removeIndividual(String name) throws IOException {
-        return execute(DELETE_INDIVIDUAL, name);
+        return execute(cs.DELETE_INDIVIDUAL, name);
     }
 
     public Neo4jResponse removeAll() throws IOException {
-        return execute(DELETE_ALL);
+        return execute(cs.DELETE_ALL);
     }
 
     public List<Node> getNext(String name) throws IOException {
-        return composeNodeListFromRowAttribute(parseNeo4jResponseRow(execute(QUERY_NEXT, name)));
+        return composeNodeListFromRowAttribute(parseNeo4jResponseRow(execute(cs.QUERY_NEXT, name)));
     }
 
     public Boolean containsNode(String nodeName) throws IOException {
-        return execute(CONTAINS_NODE, nodeName).getResults().get(0).getData().size() > 0;
+        return execute(cs.CONTAINS_NODE, nodeName).getResults().get(0).getData().size() > 0;
     }
 
     public Graph getPath(String name, int degree) throws IOException {
-        return composeGraph(execute(queryPath(degree), name));
+        return composeGraph(execute(cs.queryPath(degree), name));
     }
 
     public Graph getShortestPath(String fromName, String toName) throws IOException {
-        return composeGraph(execute(SHORTEST_PATH, fromName, toName));
+        return composeGraph(execute(cs.SHORTEST_PATH, fromName, toName));
     }
 
     public Graph getAllNodesAndRelationships() throws IOException {
-        return composeGraph(execute(GET_ALL));
+        return composeGraph(execute(cs.GET_ALL));
     }
 
     public Neo4jResponse execute(String statement, String ...props) throws IOException {
@@ -198,9 +200,9 @@ public class Neo4jService extends CypherService {
     private Neo4jResponse saveNodeWithProperty(ComponentEnum component, String name, Map<String, String> properties) throws IOException {
         Batch batch = new Batch();
         if (component == ComponentEnum.CLASS)
-            batch.statements.add(MERGE_CLASS);
+            batch.statements.add(cs.MERGE_CLASS);
         else if (component == ComponentEnum.INDIVIDUAL)
-            batch.statements.add(MERGE_INDIVIDUAL);
+            batch.statements.add(cs.MERGE_INDIVIDUAL);
         batch.parameters.add(new Parameter(name));
         addProperty2Batch(component, name, properties, batch);
         return execute(batch);
@@ -214,7 +216,7 @@ public class Neo4jService extends CypherService {
 
     private void addProperty2Batch(ComponentEnum component, String name, Map<String, String> properties, Batch batch) {
         for (Map.Entry<String, String> e : properties.entrySet()) {
-            batch.statements.add(setProperty(component.getName(), e.getKey()));
+            batch.statements.add(cs.setProperty(component.getName(), e.getKey()));
             batch.parameters.add(new Parameter(name, e.getValue()));
         }
     }

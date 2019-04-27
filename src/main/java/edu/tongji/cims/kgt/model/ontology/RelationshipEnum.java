@@ -13,7 +13,9 @@ import lombok.Getter;
 public enum RelationshipEnum {
 
     SUB_CLASS("subClass"),
+//    SUB_CLASS("子类"),
     INDIVIDUAL("individual");
+//    INDIVIDUAL("实例");
 
     private String name;
 

@@ -20,38 +20,11 @@ public class KnowledgeGraphClientTest {
     private static KnowledgeGraphClient kgClient = new KnowledgeGraphClient(uri);
 
     public static void main(String[] args) throws IOException, OWLOntologyCreationException {
-
-//        String name = "test";
-//        String name1 = "test1";
-//        String name2 = "test2";
-//        String superClassName = "super";
-//        String subClassName = "subClass";
-//        saveSubClassTest("test", "test2");
-//        saveClassTest(name);
-        Map<String, String> properties = new HashMap<>();
-        properties.put("size", "3");
-//        saveClassTest(name, properties);
-//        saveClassTest(name1, properties);
-//        saveClassTest(name2, properties);
-//        updateClassPropertyTest(name, properties);
-//        removeAllTest();
-//        File file = new File("C:\\Users\\Yue\\Desktop\\Ontology1480424544138.rdf");
+//        File file = new File("C:\\Users\\Yue\\Desktop\\shdq\\newWindEquipment.owl");
 //        parseOntology(file);
-//        System.out.println(getNodeByProperty("name", "test", true));
-//        System.out.println(getNodeLabelTest("test"));
-//        saveClassTest("test");
-//        System.out.println(getNodeByProperty("name", "test", false));
-//        System.out.println(getNextTest("test"));
-//        System.out.println(getNodePropertyTest("supplier/100134"));
-//        saveIndividualTest("test");
-//        System.out.println(getNodeTypeTest("test"));
-//        System.out.println(getIndividualTest("供应商一般地区信息"));
-//        System.out.println(getAllNodesAndRelationshipsTest());
-//        System.out.println(saveIndividualTest("cc", properties));
-//        System.out.println(updateIndividualPropertyTest("cc", properties));
-        System.out.println(getNodePropertyTest("aa"));
-//        System.out.println(saveIndividualTest("cc", "is", "aa"));
-
+        String name = "地理位置";
+        int degree = 10;
+        System.out.println(getPathTest(name, degree).toString());
     }
 
     public static Boolean saveIndividualTest(String fromIndividualName, String relationship, String toIndividualName) throws IOException {

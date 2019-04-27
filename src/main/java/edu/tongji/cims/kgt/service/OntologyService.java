@@ -36,8 +36,9 @@ import java.util.stream.Stream;
  * @version 0.0.1
  */
 
-public class OntologyService extends CypherService {
+public class OntologyService {
 
+    private CypherService cs;
     private OWLOntology ontology;
     private OWLReasoner reasoner;
     private Neo4jService neo4jService;
@@ -45,6 +46,7 @@ public class OntologyService extends CypherService {
 
     public OntologyService(Neo4jService neo4jService) {
         this.neo4jService = neo4jService;
+        this.cs = new CypherService();
     }
 
     public Boolean parse(File file) throws OWLOntologyCreationException, IOException {
@@ -67,7 +69,7 @@ public class OntologyService extends CypherService {
         String className = getObjectName(clazz);
         parseAnnotation(ComponentEnum.CLASS, clazz, className);  // 解析类的annotation
 
-        batch.statements.add(MERGE_CLASS);
+        batch.statements.add(cs.MERGE_CLASS);
         batch.parameters.add(new Parameter(className));
 
         NodeSet<OWLClass> superClassNodes = reasoner.getSuperClasses(clazz, true);
@@ -76,9 +78,9 @@ public class OntologyService extends CypherService {
             String superClassName = getObjectName(superClass);
             // 过滤owl:thing类
             if (!superClassName.equals(ComponentEnum.OWL_THING.getName())) {
-                batch.statements.add(MERGE_CLASS);
+                batch.statements.add(cs.MERGE_CLASS);
                 batch.parameters.add(new Parameter(superClassName));
-                batch.statements.add(MERGE_RELATIONSHIP);
+                batch.statements.add(cs.MERGE_RELATIONSHIP);
                 batch.parameters.add(new Parameter(superClassName, RelationshipEnum.SUB_CLASS.getName(), className));
             }
         }
@@ -90,9 +92,9 @@ public class OntologyService extends CypherService {
         for (Node<OWLNamedIndividual> individualNode : individualNodes) {
             OWLNamedIndividual individual = individualNode.getRepresentativeElement();
             String individualName = getObjectName(individual);
-            batch.statements.add(MERGE_INDIVIDUAL);
+            batch.statements.add(cs.MERGE_INDIVIDUAL);
             batch.parameters.add(new Parameter(individualName));
-            batch.statements.add(MERGE_RELATIONSHIP);
+            batch.statements.add(cs.MERGE_RELATIONSHIP);
             batch.parameters.add(new Parameter(clazz.getClassName(), RelationshipEnum.INDIVIDUAL.getName(), individualName));
 
             parseAnnotation(ComponentEnum.INDIVIDUAL, individual, individualName);  // 解析实例的annotation
@@ -111,9 +113,9 @@ public class OntologyService extends CypherService {
             String objectPropertyName = getObjectName(objectProperty);
             String toIndividualName = getObjectName(individualNode.getRepresentativeElement());
 
-            batch.statements.add(MERGE_INDIVIDUAL);
+            batch.statements.add(cs.MERGE_INDIVIDUAL);
             batch.parameters.add(new Parameter(toIndividualName));
-            batch.statements.add(MERGE_RELATIONSHIP);
+            batch.statements.add(cs.MERGE_RELATIONSHIP);
             batch.parameters.add(new Parameter(fromIndividualName, objectPropertyName, toIndividualName));
 
             parseAnnotation(ComponentEnum.RELATIONSHIP, objectProperty, fromIndividualName,objectPropertyName, toIndividualName);  // 解析对象属性的annotation
@@ -124,7 +126,7 @@ public class OntologyService extends CypherService {
         for (OWLLiteral object : reasoner.getDataPropertyValues(individual, dataProperty.asOWLDataProperty())) {
             String dataPropertyName = getObjectName(dataProperty.asOWLDataProperty());
             String dataPropertyValue = object.getLiteral();
-            batch.statements.add(setProperty(ComponentEnum.INDIVIDUAL.getName(), dataPropertyName));
+            batch.statements.add(cs.setProperty(ComponentEnum.INDIVIDUAL.getName(), dataPropertyName));
             batch.parameters.add(new Parameter(individualName, dataPropertyValue));
 //            parseAnnotation(dataPropertyName, dataProperty);  // 解析数据属性的annotation
         }
@@ -137,7 +139,7 @@ public class OntologyService extends CypherService {
             if (annotationName.contains(":"))  // 去除annotation前缀
                 annotationName = annotationName.substring(annotationName.indexOf(":") + 1);
             String annotationValue = a.getValue().asLiteral().orElse(new OWLLiteralImplString("")).getLiteral();
-            batch.statements.add(setProperty(component.getName(), annotationName));
+            batch.statements.add(cs.setProperty(component.getName(), annotationName));
             if (component == ComponentEnum.RELATIONSHIP)
                 batch.parameters.add(new Parameter(entityName[0], entityName[1], entityName[2], annotationValue));
             else
