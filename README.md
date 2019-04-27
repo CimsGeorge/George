@@ -7,15 +7,15 @@ A knowledge graph tool.
 IDEA->File->Settings->Plugins->marketplace->搜索lombok->下载lombok插件并重启idea
 ```
 导入项目：
-```$xslt
+```
 idea主界面->Import Project->找到项目所在位置->Import project from external model->maven->一路next
 ```
 
-
-启动项目前要启动图数据库。
+调用该包的方法请参考test文件夹下的KnowledgeGraphClientTest类。
+使用前要启动图数据库。
 
 打包前，若为英文本体使用，修改RelationshipEnum.class中的内容为：
-```$xslt
+```
 SUB_CLASS("subClass"),
 INDIVIDUAL("individual");
 ```
@@ -28,15 +28,13 @@ INDIVIDUAL("individual");
 mvn install:install-file -Dfile=文件位置\kgt-0.0.1.jar -DgroupId=edu.tongji.cims -DartifactId=kgt -Dversion=0.0.1 -Dpackaging=jar
 ```
 安装后，如在maven项目中pom.xml文件添加：
-```$xslt
+```
 <dependency>
     <groupId>edu.tongji.cims</groupId>
     <artifactId>kgt</artifactId>
     <version>0.0.1</version>
 </dependency>
 ```
-
-使用方法参考test文件夹下的KnowledgeGraphClientTest类。
 
 实验室项目使用kgt-0.0.1.jar，在引用的项目中添加第三方依赖：
 ```
@@ -52,7 +50,10 @@ mvn install:install-file -Dfile=文件位置\kgt-0.0.1.jar -DgroupId=edu.tongji.
     <version>x.x.x</version>
 </dependency>
 ```
-x.x.x为版本号，去https://mvnrepository.com/搜索并引用较新的版本
+x.x.x为版本号，去maven参考搜索并引用较新的版本
+```
+https://mvnrepository.com/
+```
 
 若使用其他构建工具请自行搜索解决。
 
